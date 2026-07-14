@@ -1,0 +1,134 @@
+{
+	"Name": "myjbxheadsetcontrol",
+	"Version": "0.1.0.0",
+	"Author": "holgermilz",
+	"Actions": [
+		{
+			"Name": "Mute",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.mute",
+			"Icon": "imgs/actions/mute/icon",
+			"Tooltip": "Toggle microphone mute",
+			"Controllers": [
+				"Keypad"
+			],
+			"DisableAutomaticStates": true,
+			"States": [
+				{
+					"Image": "imgs/actions/mute/live",
+					"Name": "Live",
+					"TitleAlignment": "middle"
+				},
+				{
+					"Image": "imgs/actions/mute/muted",
+					"Name": "Muted",
+					"TitleAlignment": "middle"
+				},
+				{
+					"Image": "imgs/actions/mute/offline",
+					"Name": "Offline",
+					"TitleAlignment": "middle"
+				},
+				{
+					"Image": "imgs/actions/mute/nodongle",
+					"Name": "No Dongle",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "ANC / Ambient",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.anc",
+			"Icon": "imgs/actions/anc/icon",
+			"Tooltip": "Cycle Off / Noise Cancelling / Ambient Aware",
+			"PropertyInspectorPath": "ui/anc.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/anc/icon",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Spatial Sound",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.spatial",
+			"Icon": "imgs/actions/spatial/icon",
+			"Tooltip": "Cycle spatial sound mode",
+			"PropertyInspectorPath": "ui/spatial.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/spatial/icon",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Battery",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.battery",
+			"Icon": "imgs/actions/battery/icon",
+			"Tooltip": "Shows headset battery level",
+			"PropertyInspectorPath": "ui/battery.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/battery/icon",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Game-Chat Balance",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.chatbalance",
+			"Icon": "imgs/actions/chatbalance/icon",
+			"Tooltip": "Adjust game/chat audio balance",
+			"PropertyInspectorPath": "ui/chatbalance.html",
+			"Controllers": [
+				"Encoder"
+			],
+			"Encoder": {
+				"layout": "layouts/chatbalance.json",
+				"TriggerDescription": {
+					"Rotate": "Adjust balance",
+					"Push": "Reset to 50/50"
+				}
+			},
+			"States": [
+				{
+					"Image": "imgs/actions/chatbalance/icon",
+					"TitleAlignment": "middle"
+				}
+			]
+		}
+	],
+	"Category": "myjbxheadsetcontrol",
+	"CategoryIcon": "imgs/plugin/category-icon",
+	"CodePath": "bin/plugin.js",
+	"Description": "Controls mute, ANC, Ambient Aware, spatial sound, and game-chat balance on the JBL Quantum 950, with live battery status.",
+	"Icon": "imgs/plugin/marketplace",
+	"SDKVersion": 3,
+	"Software": {
+		"MinimumVersion": "7.1"
+	},
+	"OS": [
+		{
+			"Platform": "mac",
+			"MinimumVersion": "12"
+		},
+		{
+			"Platform": "windows",
+			"MinimumVersion": "10"
+		}
+	],
+	"Nodejs": {
+		"Version": "20",
+		"Debug": "enabled"
+	},
+	"UUID": "com.holgermilz.myjbxheadsetcontrol"
+}

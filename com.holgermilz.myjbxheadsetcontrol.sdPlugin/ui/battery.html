@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Battery Settings</title>
+    <script src="sdpi-components.js"></script>
+    <style>
+        #statusBox { font-size: 11px; color: #ccc; margin-top: 5px; white-space: pre-line; }
+        #deviceError { color: #ff5555; font-size: 11px; margin-top: 2px; display: none; }
+    </style>
+  </head>
+  <body>
+    <sdpi-item label="Headset Status">
+        <p id="statusBox">Checking...</p>
+        <div id="deviceError">Headset not connected!</div>
+    </sdpi-item>
+
+    <sdpi-item label="Low threshold (%)">
+      <sdpi-textfield setting="lowThreshold" type="number" placeholder="20" default="20"></sdpi-textfield>
+    </sdpi-item>
+    <sdpi-item label="High threshold (%)">
+      <sdpi-textfield setting="highThreshold" type="number" placeholder="80" default="80"></sdpi-textfield>
+    </sdpi-item>
+    <sdpi-item label="Low Battery Color">
+      <sdpi-color setting="lowColor" default="#C0392B"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Medium Battery Color">
+      <sdpi-color setting="midColor" default="#F1C40F"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="High Battery Color">
+      <sdpi-color setting="highColor" default="#27AE60"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Offline Color">
+      <sdpi-color setting="offlineColor" default="#3D3D3D"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="No Dongle Color">
+      <sdpi-color setting="noDongleColor" default="#5A1A1A"></sdpi-color>
+    </sdpi-item>
+
+    <script src="battery-inspector.js"></script>
+  </body>
+</html>

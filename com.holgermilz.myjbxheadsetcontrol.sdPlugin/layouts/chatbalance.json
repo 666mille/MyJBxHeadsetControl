@@ -1,0 +1,11 @@
+{
+  "id": "chatbalance_layout",
+  "items": [
+    {
+      "key": "full_display",
+      "type": "pixmap",
+      "rect": [0, 0, 200, 100],
+      "zOrder": 0
+    }
+  ]
+}

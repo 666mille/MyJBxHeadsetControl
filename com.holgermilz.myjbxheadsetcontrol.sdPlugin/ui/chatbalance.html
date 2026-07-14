@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Game-Chat Balance Settings</title>
+    <script src="sdpi-components.js"></script>
+  </head>
+  <body>
+    <sdpi-item label="Low threshold (%)">
+      <sdpi-textfield setting="lowThreshold" type="number" placeholder="20" default="20"></sdpi-textfield>
+    </sdpi-item>
+    <sdpi-item label="High threshold (%)">
+      <sdpi-textfield setting="highThreshold" type="number" placeholder="80" default="80"></sdpi-textfield>
+    </sdpi-item>
+    <sdpi-item label="Low Battery Color">
+      <sdpi-color setting="lowColor" default="#C0392B"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Medium Battery Color">
+      <sdpi-color setting="midColor" default="#F1C40F"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="High Battery Color">
+      <sdpi-color setting="highColor" default="#27AE60"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Offline Color">
+      <sdpi-color setting="offlineColor" default="#3D3D3D"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="No Dongle Color">
+      <sdpi-color setting="noDongleColor" default="#5A1A1A"></sdpi-color>
+    </sdpi-item>
+  </body>
+</html>
