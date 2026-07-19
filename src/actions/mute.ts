@@ -4,9 +4,10 @@
 // (Pfeil neben dem "+"). Das Plugin schaltet NUR den State um --
 // kein setImage, da vom Nutzer gesetzte Bilder Vorrang haetten und
 // Plugin-Overlays dann unsichtbar waeren.
-import streamDeck, { action, KeyDownEvent, WillAppearEvent, SingletonAction } from "@elgato/streamdeck";
+import streamDeck, { action, KeyDownEvent, WillAppearEvent, DidReceiveSettingsEvent, SingletonAction } from "@elgato/streamdeck";
 import { setMute } from "../jbl-usb";
 import { readState, onStateChange } from "../state";
+import { disconnectedIcon } from "../icons";
 
 const STATE_LIVE = 0;
 const STATE_MUTED = 1;
@@ -17,11 +18,18 @@ const STATE_NO_DONGLE = 3;
 export class MuteAction extends SingletonAction {
     private interval?: NodeJS.Timeout;
     private unsub?: () => void;
+    private settings: any = {};
 
     override async onWillAppear(ev: WillAppearEvent) {
+        this.settings = (ev.payload?.settings as any) ?? {};
         await this.refresh(ev.action);
         this.unsub = onStateChange(() => { this.refresh(ev.action); });
         this.interval = setInterval(() => { this.refresh(ev.action); }, 5000);
+    }
+
+    override async onDidReceiveSettings(ev: DidReceiveSettingsEvent) {
+        this.settings = (ev.payload?.settings as any) ?? {};
+        await this.refresh(ev.action);
     }
 
     override async onWillDisappear() {
@@ -42,14 +50,18 @@ export class MuteAction extends SingletonAction {
         try {
             if (!action.isKey || !action.isKey()) return;
             const state = readState();
+            const s = this.settings;
+            const hdr = s.showHeader === false ? "" : (s.headerText || "JBL");
 
-            let target: number;
             if (!state.connected) {
-                target = state.dongle_present === false ? STATE_NO_DONGLE : STATE_OFFLINE;
-            } else {
-                target = state.muted ? STATE_MUTED : STATE_LIVE;
+                // Offline/No-Dongle als gerendertes SVG (mit Header + Farben)
+                const off = disconnectedIcon(state, s.offlineColor ?? "#808080", s.noDongleColor ?? "#5A1A1A", hdr);
+                if (off) { await action.setImage(off); return; }
             }
-            await action.setState(target);
+            // Verbunden: Mikrofon-Bilder der Manifest-States (Live/Muted).
+            // setImage zuruecksetzen, damit die State-Bilder wieder greifen.
+            await action.setImage();
+            await action.setState(state.muted ? STATE_MUTED : STATE_LIVE);
         } catch { /* nie werfen */ }
     }
 }

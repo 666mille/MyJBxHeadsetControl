@@ -54,9 +54,10 @@ export class SpatialAction extends SingletonAction {
             if (!action.isKey || !action.isKey()) return;
             const s = this.settings;
             const state = readState();
+            const hdr = s.showHeader === false ? "" : (s.headerText || "JBL");
 
             let image: string;
-            const off = disconnectedIcon(state, s.offlineColor ?? "#3D3D3D", s.noDongleColor ?? "#5A1A1A");
+            const off = disconnectedIcon(state, s.offlineColor ?? "#808080", s.noDongleColor ?? "#5A1A1A", hdr);
             if (off) {
                 image = off;
             } else {
@@ -66,7 +67,7 @@ export class SpatialAction extends SingletonAction {
                     fixed: s.fixedColor ?? "#D68910",
                     headtracking: s.headtrackingColor ?? "#D4AC0D",
                 };
-                image = svgIcon(colors[mode], LABELS[mode]);
+                image = svgIcon(colors[mode], LABELS[mode], "#ffffff", hdr);
             }
 
             if (image === this.lastImage) return;

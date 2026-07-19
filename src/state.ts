@@ -22,6 +22,13 @@ try {
     memoryState = {};
 }
 
+// Verbindungszustand NIE aus der Datei uebernehmen: Er muss bei jedem
+// Start neu durch echte Lebenszeichen des Headsets bewiesen werden.
+// Sonst zeigt das Plugin nach einem Rechnerstart mit ausgeschaltetem
+// Headset faelschlich den "an"-Zustand der letzten Sitzung.
+memoryState.connected = false;
+delete memoryState.dongle_present;
+
 // --- Subscription ---
 type Listener = () => void;
 const listeners = new Set<Listener>();

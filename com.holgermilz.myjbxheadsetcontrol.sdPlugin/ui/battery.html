@@ -10,6 +10,13 @@
     </style>
   </head>
   <body>
+    <sdpi-item label="Show header">
+      <sdpi-checkbox setting="showHeader" default="true" label="Show text in top-left corner"></sdpi-checkbox>
+    </sdpi-item>
+    <sdpi-item label="Header text">
+      <sdpi-textfield setting="headerText" default="JBL" placeholder="JBL"></sdpi-textfield>
+    </sdpi-item>
+
     <sdpi-item label="Headset Status">
         <p id="statusBox">Checking...</p>
         <div id="deviceError">Headset not connected!</div>
@@ -30,8 +37,11 @@
     <sdpi-item label="High Battery Color">
       <sdpi-color setting="highColor" default="#27AE60"></sdpi-color>
     </sdpi-item>
+    <sdpi-item label="Background">
+      <sdpi-color setting="background" default="#1A1A1A"></sdpi-color>
+    </sdpi-item>
     <sdpi-item label="Offline Color">
-      <sdpi-color setting="offlineColor" default="#3D3D3D"></sdpi-color>
+      <sdpi-color setting="offlineColor" default="#808080"></sdpi-color>
     </sdpi-item>
     <sdpi-item label="No Dongle Color">
       <sdpi-color setting="noDongleColor" default="#5A1A1A"></sdpi-color>

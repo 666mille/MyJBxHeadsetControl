@@ -10,6 +10,11 @@
 import { updateState, readState } from "./state";
 import { startDevice } from "./jbl-device";
 
+// Verbindungslogik: Der State startet pessimistisch auf "offline"
+// (siehe state.ts). Das ERSTE echte Lebenszeichen (bekannter Status-Code
+// oder IMU-Daten) schaltet auf "online" -- und dabei bleibt es, bis das
+// explizite 0x35-Offline-Event kommt oder der Dongle verschwindet.
+// Kein Timeout: Die Events kommen nur bei Aenderungen, nicht periodisch.
 function markAlive(): void {
     if (!readState().connected) {
         updateState("connected", true);

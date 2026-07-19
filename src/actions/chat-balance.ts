@@ -10,15 +10,19 @@ import streamDeck, {
 import { setChatBalance } from "../jbl-usb";
 import { readState, onStateChange } from "../state";
 
-const CHAT_COLOR = "#2244DD";
-const GAME_COLOR = "#AA00AA";
+const CHAT_COLOR_DEFAULT = "#2244DD";
+const GAME_COLOR_DEFAULT = "#AA00AA";
 
 interface DialSettings {
+    showHeader?: boolean;
+    headerText?: string;
     lowThreshold?: number;
     highThreshold?: number;
     lowColor?: string;
     midColor?: string;
     highColor?: string;
+    chatColor?: string;
+    gameColor?: string;
     offlineColor?: string;
     noDongleColor?: string;
     [key: string]: any;
@@ -34,49 +38,50 @@ function batColor(battery: number | null, s: DialSettings): string {
 }
 
 function genSvg(chat: number, battery: number | null, s: DialSettings, statusText: string | null, statusBg: string): string {
+    const header = s.showHeader === false ? "" : (s.headerText || "JBL");
+    const headerElem = header
+        ? `<text x="5" y="20" text-anchor="start" font-family="sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF">${header}</text>`
+        : "";
     const game = 100 - chat;
     // Bei Offline/No Dongle: Batteriewert unbekannt -> "???" in Weiss
     const batValue = statusText ? "???" : (battery == null ? "--" : `${battery}%`);
     const batClr = statusText ? "#FFFFFF" : batColor(battery, s);
-    // Hintergrund: normal dunkel, im Statusfall die Offline-/NoDongle-Farbe
-    const bg = statusText ? statusBg : "#1A1A1A";
+    // Hintergrund: normal transparent. OFFLINE: transparent, Farbe nur im
+    // Status-Text. NO DONGLE: Farbe als Hintergrund, Text weiss.
+    const isNoDongle = statusText === "NO DONGLE";
+    const bg = isNoDongle ? statusBg : "none";
+    const statusTextColor = isNoDongle ? "#FFFFFF" : statusBg;
 
     let body: string;
     if (statusText) {
-        // Statt Balken + Prozentwerten: Status-Text in Weiss, passend gross
-        body = `<text x="100" y="66" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="bold" fill="#FFFFFF">${statusText}</text>`;
+        // Statt Balken + Prozentwerten: Status-Text, passend gross
+        body = `<text x="100" y="66" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="bold" fill="${statusTextColor}">${statusText}</text>`;
     } else {
-        const maxW = 176;
-        const x0 = 12;
-        const barH = 20;
-        const barY = 48;
-        const chatW = Math.round(maxW * (chat / 100));
-        const knobX = x0 + chatW;
-
-        const bubble = chatW > 30 ? `
-        <rect x="${x0 + 7}" y="${barY + 5}" width="13" height="9" rx="2.5" fill="#FFFFFF"/>
-        <path d="M ${x0 + 10} ${barY + 14} L ${x0 + 10} ${barY + 17} L ${x0 + 14} ${barY + 14} Z" fill="#FFFFFF"/>` : "";
-
-        const pad = (maxW - chatW) > 32 ? `
-        <rect x="${x0 + maxW - 24}" y="${barY + 6}" width="17" height="8" rx="4" fill="#FFFFFF"/>
-        <circle cx="${x0 + maxW - 20}" cy="${barY + 10}" r="1.7" fill="${GAME_COLOR}"/>
-        <circle cx="${x0 + maxW - 11}" cy="${barY + 10}" r="1.7" fill="${GAME_COLOR}"/>` : "";
+        // Balken in exakt den ATK-Massen: Rahmen 182x10 bei x=9/y=76,
+        // Spur 180x8, Fuellung 8 hoch mit rx=4.
+        const chatW = Math.round(180 * (chat / 100));
+        const chatColor = s.chatColor ?? CHAT_COLOR_DEFAULT;
+        const gameColor = s.gameColor ?? GAME_COLOR_DEFAULT;
 
         body = `
-        <text x="${x0}" y="42" text-anchor="start" font-family="sans-serif" font-size="19" font-weight="bold" fill="#FFFFFF">${chat}</text>
-        <text x="${x0 + maxW}" y="42" text-anchor="end" font-family="sans-serif" font-size="19" font-weight="bold" fill="#FFFFFF">${game}</text>
-        <rect x="${x0}" y="${barY}" width="${chatW}" height="${barH}" rx="7" fill="${CHAT_COLOR}"/>
-        <rect x="${knobX}" y="${barY}" width="${maxW - chatW}" height="${barH}" rx="7" fill="${GAME_COLOR}"/>
-        <rect x="${knobX - 2}" y="${barY - 3}" width="4" height="${barH + 6}" rx="2" fill="#EEEEEE"/>
-        ${bubble}
-        ${pad}`;
+<g transform="translate(14, 26)" stroke="#FFFFFF" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 4 20 v -4 a 13 13 0 0 1 26 0 v 4"/>
+        <rect x="0" y="18" width="8" height="13" rx="3" fill="#FFFFFF" stroke="none"/>
+        <rect x="26" y="18" width="8" height="13" rx="3" fill="#FFFFFF" stroke="none"/>
+        <path d="M 26 31 v 3 a 6 6 0 0 1 -6 6 h -4" stroke-width="2.2"/>
+        </g>
+        <text x="60" y="58" text-anchor="start" font-family="sans-serif" font-size="23" font-weight="bold" fill="${chatColor}">${chat}<tspan font-size="11" font-weight="600" fill="#BBBBBB"> chat</tspan></text>
+        <text x="192" y="58" text-anchor="end" font-family="sans-serif" font-size="23" font-weight="bold" fill="${gameColor}"><tspan font-size="11" font-weight="600" fill="#BBBBBB">game </tspan>${game}</text>
+        <rect x="9" y="76" width="182" height="10" rx="5" ry="5" fill="none" stroke="#FFFFFF" stroke-width="1"/>
+        <rect x="10" y="77" width="180" height="8" fill="#333333" rx="4" ry="4"/>
+        <rect x="10" y="77" width="${chatW}" height="8" fill="${chatColor}" rx="4" ry="4"/>
+        <rect x="${10 + chatW}" y="77" width="${180 - chatW}" height="8" fill="${gameColor}" rx="4" ry="4"/>`;
     }
 
     return `<svg width="200" height="100" viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg">
       <rect width="200" height="100" fill="${bg}"/>
-      <text x="12" y="17" text-anchor="start" font-family="sans-serif" font-size="13" font-weight="bold" fill="#FFFFFF">JBL</text>
-      <text x="188" y="17" text-anchor="end" font-family="sans-serif" font-size="13" font-weight="bold" fill="#FFFFFF">BAT(<tspan fill="${batClr}">${batValue}</tspan>)</text>
-      <text x="100" y="95" text-anchor="middle" font-family="sans-serif" font-size="11" font-weight="600" fill="#BBBBBB">GAME-CHAT-BALANCE</text>
+      ${headerElem}
+      <text x="195" y="20" text-anchor="end" font-family="sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF">BAT(<tspan fill="${batClr}">${batValue}</tspan>)</text>
       ${body}
     </svg>`;
 }
@@ -154,7 +159,7 @@ export class ChatBalanceAction extends SingletonAction {
                     statusBg = s.noDongleColor ?? "#5A1A1A";
                 } else {
                     statusText = "OFFLINE";
-                    statusBg = s.offlineColor ?? "#3D3D3D";
+                    statusBg = s.offlineColor ?? "#808080";
                 }
             }
 

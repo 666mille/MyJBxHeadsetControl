@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="144" height="144">
-  <rect width="144" height="144" rx="20" fill="#8B1E1E"/>
-  <text x="72" y="82" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#ffffff">MUTED</text>
+  <rect width="144" height="144" rx="20" fill="#1A1A1A"/>
+  <text x="10" y="24" text-anchor="start" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#ffffff">JBL</text>
+  <rect x="60" y="30" width="24" height="42" rx="12" fill="#ffffff"/>
+  <path d="M 46 62 a 26 26 0 0 0 52 0" fill="none" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <line x1="72" y1="90" x2="72" y2="104" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <line x1="54" y1="106" x2="90" y2="106" stroke="#ffffff" stroke-width="6" stroke-linecap="round"/>
+  <line x1="34" y1="112" x2="110" y2="26" stroke="#E02020" stroke-width="11" stroke-linecap="round"/>
+  <text x="72" y="134" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#E02020">muted</text>
 </svg>

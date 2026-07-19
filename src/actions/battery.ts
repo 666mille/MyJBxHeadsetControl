@@ -5,7 +5,7 @@ import streamDeck, {
     action, WillAppearEvent, DidReceiveSettingsEvent, SendToPluginEvent, SingletonAction,
 } from "@elgato/streamdeck";
 import { readState, onStateChange } from "../state";
-import { svgIcon, disconnectedIcon } from "../icons";
+import { batteryIcon, disconnectedIcon } from "../icons";
 
 @action({ UUID: "com.holgermilz.myjbxheadsetcontrol.battery" })
 export class BatteryAction extends SingletonAction {
@@ -47,13 +47,14 @@ export class BatteryAction extends SingletonAction {
             if (!action.isKey || !action.isKey()) return;
             const s = this.settings;
             const state = readState();
+            const hdr = s.showHeader === false ? "" : (s.headerText || "JBL");
 
             let image: string;
-            const off = disconnectedIcon(state, s.offlineColor ?? "#3D3D3D", s.noDongleColor ?? "#5A1A1A");
+            const off = disconnectedIcon(state, s.offlineColor ?? "#808080", s.noDongleColor ?? "#5A1A1A", hdr);
             if (off) {
                 image = off;
             } else if (state.battery == null) {
-                image = svgIcon("#555555", "--%");
+                image = batteryIcon(null, "#808080", s.background ?? "#1A1A1A", hdr);
             } else {
                 const low = s.lowThreshold ?? 20;
                 const high = s.highThreshold ?? 80;
@@ -62,7 +63,7 @@ export class BatteryAction extends SingletonAction {
                 if (battery < low) color = s.lowColor ?? "#C0392B";
                 else if (battery > high) color = s.highColor ?? "#27AE60";
                 else color = s.midColor ?? "#F1C40F";
-                image = svgIcon(color, `${battery}%`);
+                image = batteryIcon(battery, color, s.background ?? "#1A1A1A", hdr);
             }
 
             if (image === this.lastImage) return;

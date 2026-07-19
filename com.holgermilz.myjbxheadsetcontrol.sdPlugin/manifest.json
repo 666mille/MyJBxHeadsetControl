@@ -1,5 +1,5 @@
 {
-	"Name": "myjbxheadsetcontrol",
+	"Name": "JBxHeadsetControl",
 	"Version": "0.1.0.0",
 	"Author": "holgermilz",
 	"Actions": [
@@ -7,6 +7,7 @@
 			"Name": "Mute",
 			"UUID": "com.holgermilz.myjbxheadsetcontrol.mute",
 			"Icon": "imgs/actions/mute/icon",
+			"PropertyInspectorPath": "ui/mute.html",
 			"Tooltip": "Toggle microphone mute",
 			"Controllers": [
 				"Keypad"
@@ -107,7 +108,7 @@
 			]
 		}
 	],
-	"Category": "myjbxheadsetcontrol",
+	"Category": "JBxHeadsetControl",
 	"CategoryIcon": "imgs/plugin/category-icon",
 	"CodePath": "bin/plugin.js",
 	"Description": "Controls mute, ANC, Ambient Aware, spatial sound, and game-chat balance on the JBL Quantum 950, with live battery status.",
