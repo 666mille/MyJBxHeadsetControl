@@ -1,4 +1,4 @@
-MyJBxHeadsetControl
+# MyJBxHeadsetControl
 
 A Stream Deck plugin for the **JBL Quantum 950 Wireless** headset.
 
