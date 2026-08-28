@@ -1,4 +1,4 @@
-# MyJBxHeadsetControl
+MyJBxHeadsetControl
 
 A Stream Deck plugin for the **JBL Quantum 950 Wireless** headset.
 
@@ -9,7 +9,12 @@ no JBL QuantumENGINE required. The plugin talks to the headset's USB dongle over
 reverse-engineered HID protocol and shows live status on your keys and dials.
 
 > This project is not affiliated with, endorsed by, or supported by JBL / HARMAN.
-> Use at your own risk.
+> Use at your own risk. The author is not responsible for any hardware damage or software conflicts.
+
+### Why is this not on the Elgato Marketplace?
+Due to recent changes in the Elgato Maker Agreement, developers are now required to accept comprehensive personal liability and indemnification clauses under Californian law. As an independent developer offering free, open-source hobby projects, I cannot accept these legal and financial risks.
+
+Therefore, this plugin—and all future updates to my existing plugins—will exclusively be published here on GitHub. You can always find the latest, safe-to-use `.streamDeckPlugin` files directly on the Releases page.
 
 ## Features
 
