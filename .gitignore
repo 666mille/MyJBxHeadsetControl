@@ -1,10 +1,10 @@
 # Dependencies
 node_modules/
 
-# Build output (wird durch npm run build erzeugt)
+# Build output (created by npm run build)
 com.holgermilz.myjbxheadsetcontrol.sdPlugin/bin/
 
-# Laufzeit-Dateien
+# Runtime files
 com.holgermilz.myjbxheadsetcontrol.sdPlugin/logs/
 *.log
 state.json
@@ -15,5 +15,9 @@ state.json.tmp
 .DS_Store
 Thumbs.db
 
-# Gepackte Releases (werden an GitHub-Releases angehaengt)
+# Packed releases (attached to GitHub releases)
 *.streamDeckPlugin
+
+# JBL data: never publish (captured presets, proprietary DLL)
+eq-presets.json
+*.dll

@@ -1,0 +1,9 @@
+{
+    "name": "com.holgermilz.myjbxheadsetcontrol",
+    "private": true,
+    "type": "module",
+    "dependencies": {
+        "node-hid": "^3.3.0",
+        "koffi": "^3.3.3"
+    }
+}

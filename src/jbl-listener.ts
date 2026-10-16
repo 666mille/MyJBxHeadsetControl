@@ -1,20 +1,14 @@
 // src/jbl-listener.ts
-// Parst die eingehenden HID-Events und schreibt sie in den State.
-// Die Verbindung verwaltet jbl-device.ts (ein gemeinsamer Handle).
+// Parses incoming HID events into the state. The connection itself lives in jbl-device.ts.
 //
-// WICHTIG: Die Events kommen vom DONGLE, nicht vom Headset selbst. Der
-// Dongle sendet auch bei AUSGESCHALTETEM Headset periodische Pakete.
-// Deshalb gilt NICHT jedes Paket als Lebenszeichen -- sonst wuerde das
-// 0x35-Offline-Event sofort wieder von Dongle-Paketen ueberschrieben.
-// Nur BEKANNTE Status-Codes und IMU-Daten beweisen: Headset ist an.
+// Events come from the DONGLE, which also sends packets while the headset is off.
+// So only known status codes and IMU data count as "headset is on".
 import { updateState, readState } from "./state";
 import { startDevice } from "./jbl-device";
 
-// Verbindungslogik: Der State startet pessimistisch auf "offline"
-// (siehe state.ts). Das ERSTE echte Lebenszeichen (bekannter Status-Code
-// oder IMU-Daten) schaltet auf "online" -- und dabei bleibt es, bis das
-// explizite 0x35-Offline-Event kommt oder der Dongle verschwindet.
-// Kein Timeout: Die Events kommen nur bei Aenderungen, nicht periodisch.
+// State starts as offline (see state.ts). The first real sign of life switches
+// to online until the explicit 0x35 offline event or the dongle disappears.
+// No timeout: events only arrive on changes.
 function markAlive(): void {
     if (!readState().connected) {
         updateState("connected", true);
@@ -24,7 +18,7 @@ function markAlive(): void {
 function parseEvent(data: Buffer): void {
     if (data.length < 16 || data[0] !== 0x86 || data[1] !== 0x00 || data[2] !== 0xdd) return;
 
-    // IMU-Rohdaten: kommen nur bei eingeschaltetem Headset (Headtracking)
+    // IMU data (head tracking) only comes from a powered-on headset
     if (data[7] === 0x1a) {
         markAlive();
         return;
@@ -41,8 +35,7 @@ function parseEvent(data: Buffer): void {
         markAlive();
         updateState("muted", value === 0x80);
     } else if (codeA === 0x35 && codeB === 0x00) {
-        // Explizites Connect/Disconnect-Event -- die Autoritaet.
-        // Batteriewert behalten (siehe jbl-device.ts).
+        // Explicit connect/disconnect event. Keep the battery value.
         updateState("connected", value === 0x80);
     } else if (codeA === 0x18 && codeB === 0x00) {
         markAlive();
@@ -60,7 +53,7 @@ function parseEvent(data: Buffer): void {
         const mode = value === 0x81 ? "fixed" : value === 0x82 ? "headtracking" : "off";
         updateState("spatial_sound", mode);
     }
-    // Unbekannte Codes: NICHT als Lebenszeichen werten (Dongle-Pakete)
+    // Unknown codes are dongle packets, not a sign of life
 }
 
 export function startListener(): void {

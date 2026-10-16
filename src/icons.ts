@@ -1,10 +1,6 @@
 // src/icons.ts
-// SVG-Icons fuer Tasten (144x144): weisser fetter Text, mehrzeilig (\n),
-// Schriftgroesse passt sich automatisch an die laengste Zeile an.
-//
-// WICHTIG: Der Stream-Deck-SVG-Renderer unterstuetzt kein <tspan>-Layout.
-// Deshalb wird JEDE Zeile als eigenes <text>-Element gerendert (gleiche
-// Technik wie im WLED-Plugin).
+// SVG key icons (144x144): bold white text, multi-line (\n), font size fits the longest line.
+// The Stream Deck SVG renderer doesn't support <tspan> layout, so each line is its own <text>.
 const KEY_SIZE = 144;
 const PADDING = 8;
 
@@ -12,7 +8,7 @@ export function svgIcon(bgColor: string, text: string, textColor = "#ffffff", he
     const lines = text.split("\n");
     const maxLen = Math.max(...lines.map((l) => l.length), 1);
 
-    // Arial Bold: Zeichenbreite ~0.62 * fontSize
+    // Arial Bold: char width ~0.62 * fontSize
     const usable = KEY_SIZE - 2 * PADDING;
     let fs = Math.floor(usable / (0.62 * maxLen));
     fs = Math.min(30, Math.max(12, fs));
@@ -44,7 +40,7 @@ function escapeXml(s: string): string {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-// "Nicht verbunden"-Icon mit konfigurierbaren Farben, oder null wenn verbunden.
+// "Offline" / "No dongle" icon, or null when connected.
 export function disconnectedIcon(
     state: any,
     offlineColor = "#808080",
@@ -58,8 +54,8 @@ export function disconnectedIcon(
     return svgIcon(offlineColor, "OFFLINE", "#ffffff", header);
 }
 
-// Batterie-Symbol im Stil des ATK-Plugins: Umriss + dynamische Fuellung
-// nach Ladestand, Prozentzahl darunter, optionaler Header oben links.
+// Battery icon (ATK plugin style): outline with fill by charge level,
+// percentage below, optional header top left.
 export function batteryIcon(
     percent: number | null,
     color: string,

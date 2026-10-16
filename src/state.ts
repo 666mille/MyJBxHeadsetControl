@@ -1,9 +1,7 @@
 // src/state.ts
-// In-Memory-State + Subscription. Der Datei-Spiegel (state.json) wird
-// GEBUENDELT geschrieben (max. alle 500ms), nicht bei jedem Update:
-// Das Game-Chat-Rad am Headset feuert pro Rastschritt ein Event; ein
-// synchroner Plattenschreibvorgang pro Event blockiert die Event-Loop
-// und laesst die Verarbeitung um Sekunden hinterherhinken.
+// In-memory state with change subscription. The state.json mirror is written
+// batched (every 500 ms at most): the game/chat wheel fires one event per step,
+// and a sync disk write per event would block the event loop.
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from "url";
@@ -22,10 +20,8 @@ try {
     memoryState = {};
 }
 
-// Verbindungszustand NIE aus der Datei uebernehmen: Er muss bei jedem
-// Start neu durch echte Lebenszeichen des Headsets bewiesen werden.
-// Sonst zeigt das Plugin nach einem Rechnerstart mit ausgeschaltetem
-// Headset faelschlich den "an"-Zustand der letzten Sitzung.
+// Never restore the connection state from the file: it has to be proven by
+// real headset events on every start.
 memoryState.connected = false;
 delete memoryState.dongle_present;
 
@@ -45,12 +41,12 @@ function notify(): void {
     setTimeout(() => {
         notifyPending = false;
         for (const cb of listeners) {
-            try { cb(); } catch { /* ignorieren */ }
+            try { cb(); } catch { /* ignore */ }
         }
     }, 20);
 }
 
-// --- Gebuendelter Datei-Spiegel ---
+// --- Batched file mirror ---
 const MIRROR_INTERVAL_MS = 500;
 let mirrorTimer: NodeJS.Timeout | null = null;
 let mirrorDirty = false;
@@ -66,7 +62,7 @@ function scheduleMirror(): void {
             const tmpFile = STATE_FILE + ".tmp";
             fs.writeFileSync(tmpFile, JSON.stringify(memoryState, null, 2), "utf-8");
             fs.renameSync(tmpFile, STATE_FILE);
-        } catch { /* unkritisch, naechster Versuch beim naechsten Update */ }
+        } catch { /* not critical, retried on next update */ }
     }, MIRROR_INTERVAL_MS);
 }
 
@@ -77,6 +73,6 @@ export function readState(): any {
 export function updateState(key: string, value: any): void {
     if (memoryState[key] === value) return;
     memoryState[key] = value;
-    notify();          // sofort (in-memory)
-    scheduleMirror();  // Platte: gebuendelt, spaeter
+    notify();          // in-memory, right away
+    scheduleMirror();  // disk, batched
 }

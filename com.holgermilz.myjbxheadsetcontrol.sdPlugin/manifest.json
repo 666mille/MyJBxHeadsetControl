@@ -1,6 +1,6 @@
 {
 	"Name": "JBxHeadsetControl",
-	"Version": "0.1.0.0",
+	"Version": "2.0.0.0",
 	"Author": "holgermilz",
 	"Actions": [
 		{
@@ -102,7 +102,47 @@
 			},
 			"States": [
 				{
-					"Image": "imgs/actions/chatbalance/icon",
+					"Image": "imgs/actions/chatbalance/key",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "EQ Preset",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.eqkey",
+			"Icon": "imgs/actions/eq/icon",
+			"Tooltip": "Apply an EQ preset from QuantumENGINE",
+			"PropertyInspectorPath": "ui/eq.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/eq/key",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "EQ Preset Dial",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.eqdial",
+			"Icon": "imgs/actions/eqdial/icon",
+			"Tooltip": "Rotate to choose an EQ preset, press to apply",
+			"PropertyInspectorPath": "ui/eqdial.html",
+			"Controllers": [
+				"Encoder"
+			],
+			"Encoder": {
+				"layout": "layouts/eqdial.json",
+				"TriggerDescription": {
+					"Rotate": "Choose preset",
+					"Push": "Apply",
+					"Touch": "Apply"
+				}
+			},
+			"States": [
+				{
+					"Image": "imgs/actions/eqdial/key",
 					"TitleAlignment": "middle"
 				}
 			]
@@ -111,7 +151,7 @@
 	"Category": "JBxHeadsetControl",
 	"CategoryIcon": "imgs/plugin/category-icon",
 	"CodePath": "bin/plugin.js",
-	"Description": "Controls mute, ANC, Ambient Aware, spatial sound, and game-chat balance on the JBL Quantum 950, with live battery status.",
+	"Description": "Controls mute, ANC, Ambient Aware, spatial sound, game-chat balance and EQ presets on the JBL Quantum 950, with live battery status.",
 	"Icon": "imgs/plugin/marketplace",
 	"SDKVersion": 3,
 	"Software": {

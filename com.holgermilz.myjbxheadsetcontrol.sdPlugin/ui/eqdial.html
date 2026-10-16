@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>EQ Preset Dial Settings</title>
+    <script src="sdpi-components.js"></script>
+    <style>
+      #engine { font-size: 11px; margin-top: 4px; }
+      .ok { color: #8bc34a; } .err { color: #ff5555; }
+    </style>
+  </head>
+  <body>
+    <sdpi-item label="Show header">
+      <sdpi-checkbox setting="showHeader" default="true" label="Show text in top-left corner"></sdpi-checkbox>
+    </sdpi-item>
+    <sdpi-item label="Header text">
+      <sdpi-textfield setting="headerText" default="JBL" placeholder="JBL"></sdpi-textfield>
+    </sdpi-item>
+
+    <sdpi-item label="Preset">
+      <sdpi-select setting="preset" datasource="getPresets" loading="Loading presets from q950.dat…" hot-reload></sdpi-select>
+    </sdpi-item>
+    <sdpi-item label="Apply on select">
+      <sdpi-checkbox setting="applyOnSelect" label="Send preset immediately when chosen here"></sdpi-checkbox>
+    </sdpi-item>
+
+    <sdpi-item label="Active Color">
+      <sdpi-color setting="activeColor" default="#27AE60"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Press Color">
+      <sdpi-color setting="pendingColor" default="#FF9800"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Offline Color">
+      <sdpi-color setting="offlineColor" default="#808080"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="No Dongle Color">
+      <sdpi-color setting="noDongleColor" default="#5A1A1A"></sdpi-color>
+    </sdpi-item>
+
+    <sdpi-item label="EQ engine">
+      <div id="engine">Checking…</div>
+    </sdpi-item>
+    <sdpi-item label="DLL path (optional)">
+      <sdpi-textfield global setting="dllPath" placeholder="auto (libAirohaEQSerializeImp.dll)"></sdpi-textfield>
+    </sdpi-item>
+
+    <p style="font-size:11px;color:#aaa;">Rotate to choose a preset, press or tap to apply. Without a press it jumps back to the active preset after 3 seconds.</p>
+    <script src="eq-inspector.js"></script>
+  </body>
+</html>

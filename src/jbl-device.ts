@@ -1,5 +1,5 @@
 // src/jbl-device.ts
-// Zentraler HID-Zugriff: EIN gemeinsamer Handle fuer Lesen (Events) und Schreiben (Befehle).
+// Shared HID handle for reading events and sending commands.
 import { HID, devices } from "node-hid";
 import streamDeck from "@elgato/streamdeck";
 import { updateState } from "./state";
@@ -7,6 +7,7 @@ import { updateState } from "./state";
 const VID = 0x0ecb;
 const PID = 0x2127;
 const COL_INDEX = 3;
+const CHUNK = 54; // payload bytes per report, same as QuantumENGINE
 
 let device: HID | null = null;
 let reconnectTimer: NodeJS.Timeout | null = null;
@@ -32,10 +33,8 @@ function getDevicePath(): string | null {
     return target?.path ?? null;
 }
 
-// Batteriewert bewusst NICHT nullen: Nach einem Reconnect zeigt die
-// Anzeige sofort den letzten bekannten Wert und korrigiert sich beim
-// naechsten Batterie-Event. (Das Headset sendet den Wert nicht sofort
-// beim Verbinden, sondern nur periodisch/bei Aenderung.)
+// Keep the battery value on purpose: after a reconnect the last known value is
+// shown until the next battery event arrives.
 function markDisconnected(donglePresent: boolean): void {
     updateState("connected", false);
     updateState("dongle_present", donglePresent);
@@ -43,47 +42,45 @@ function markDisconnected(donglePresent: boolean): void {
 
 function closeHandle(): void {
     if (device) {
-        try { device.close(); } catch { /* ignorieren */ }
+        try { device.close(); } catch { /* ignore */ }
         device = null;
     }
 }
 
 function connect(): void {
-    // Doppelte gleichzeitige Verbindungsversuche verhindern
     if (connecting || device) return;
     connecting = true;
 
     const path = getDevicePath();
     if (!path) {
         connecting = false;
-        markDisconnected(false); // kein Dongle im System
-        return; // Watchdog kuemmert sich um erneuten Versuch
+        markDisconnected(false); // no dongle, watchdog retries
+        return;
     }
 
     try {
         const dev = new HID(path);
         dev.on("data", (data: Buffer) => { if (dataHandler) dataHandler(data); });
         dev.on("error", (err) => {
-            streamDeck.logger.warn(`JBL HID error (Verbindung weg): ${err}`);
+            streamDeck.logger.warn(`JBL HID error (connection lost): ${err}`);
             handleDrop();
         });
         device = dev;
         connecting = false;
         updateState("dongle_present", true);
-        streamDeck.logger.info(`JBL verbunden: ${path}`);
+        streamDeck.logger.info(`JBL connected: ${path}`);
     } catch (err) {
         connecting = false;
         closeHandle();
         markDisconnected(devicePresent());
-        streamDeck.logger.warn(`JBL connect fehlgeschlagen: ${err}`);
+        streamDeck.logger.warn(`JBL connect failed: ${err}`);
     }
 }
 
-// Verbindung ist weggebrochen (Fehler oder Dongle ab).
+// Connection dropped (error or dongle unplugged)
 function handleDrop(): void {
     closeHandle();
     markDisconnected(devicePresent());
-    // sofort einen Reconnect anstossen (mit kleiner Verzoegerung)
     if (!reconnectTimer) {
         reconnectTimer = setTimeout(() => {
             reconnectTimer = null;
@@ -92,21 +89,18 @@ function handleDrop(): void {
     }
 }
 
-// Watchdog: prueft alle 2s aktiv den Zustand.
-//  - Handle da, aber Dongle weg   -> Verbindung fallenlassen
-//  - kein Handle, aber Dongle da  -> reconnecten (Wiedereinstecken!)
+// Checks every 2 s: drop the handle if the dongle is gone, reconnect when it is back.
 function startWatchdog(): void {
     if (watchdogTimer) return;
     watchdogTimer = setInterval(() => {
         const present = devicePresent();
         if (device && !present) {
-            streamDeck.logger.warn("Watchdog: Dongle verschwunden -> NO DONGLE");
+            streamDeck.logger.warn("Watchdog: dongle gone");
             handleDrop();
         } else if (!device && present && !connecting) {
-            streamDeck.logger.info("Watchdog: Dongle wieder da -> reconnect");
+            streamDeck.logger.info("Watchdog: dongle back, reconnecting");
             connect();
         } else if (!device && !present) {
-            // weiterhin kein Dongle -> Status sicherstellen
             markDisconnected(false);
         }
     }, 2000);
@@ -120,7 +114,7 @@ export function startDevice(onData: (data: Buffer) => void): void {
 
 export function sendFeature(codeA: number, codeB: number, value: number): boolean {
     if (!device) {
-        streamDeck.logger.warn("Sendeversuch ohne verbundenes Geraet.");
+        streamDeck.logger.warn("Send without connected device.");
         return false;
     }
     try {
@@ -130,13 +124,36 @@ export function sendFeature(codeA: number, codeB: number, value: number): boolea
             0x00, codeA, codeB, 0x01, 0x00, value,
         ];
         header.forEach((b, i) => (payload[i] = b));
-        const written = device.sendFeatureReport(payload);
-        streamDeck.logger.info(
-            `sendFeature codeA=0x${codeA.toString(16)} codeB=0x${codeB.toString(16)} value=0x${value.toString(16)} -> ${written} bytes`
-        );
+        device.sendFeatureReport(payload);
         return true;
     } catch (err) {
-        streamDeck.logger.error(`Sende-Fehler: ${err}`);
+        streamDeck.logger.error(`Send error: ${err}`);
+        handleDrop();
+        return false;
+    }
+}
+
+// Multi-packet feature write for large payloads (EQ 0x0E02 / 0x0E7F)
+export function sendFeatureData(fidLow: number, fidHigh: number, data: Buffer): boolean {
+    if (!device) {
+        streamDeck.logger.warn("Send without connected device.");
+        return false;
+    }
+    const len = data.length;
+    const virt = Buffer.concat([Buffer.from([fidLow, fidHigh, len & 0xff, (len >> 8) & 0xff]), data]);
+    const count = Math.max(1, Math.ceil(virt.length / CHUNK));
+    try {
+        for (let index = 0; index < count; index++) {
+            const chunk = virt.subarray(index * CHUNK, (index + 1) * CHUNK);
+            const payload = Buffer.alloc(64, 0);
+            payload.set([0x88, 0x00, 0xdd, 0x02, 0x00, count, index,
+                         chunk.length & 0xff, (chunk.length >> 8) & 0xff], 0);
+            chunk.copy(payload, 9);
+            device.sendFeatureReport(payload);
+        }
+        return true;
+    } catch (err) {
+        streamDeck.logger.error(`Send error: ${err}`);
         handleDrop();
         return false;
     }

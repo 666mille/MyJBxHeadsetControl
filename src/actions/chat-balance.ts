@@ -1,9 +1,8 @@
 // src/actions/chat-balance.ts
-// Dial-Display (full_display-Pixmap via Custom-Layout):
-//   oben:   JBL (links) | BAT(xx) rechts, Farbe nach Batterie-Schwellen
-//   mitte:  Prozentwerte + zweifarbiger Balken (Chat blau / Game lila)
-//   unten:  GAME-CHAT-BALANCE
-// Letzter Wert wird in den Settings gespeichert (Anzeige nach Neustart).
+// Dial display (full_display pixmap via custom layout):
+//   top:    JBL (left) | BAT(xx) right, colored by battery thresholds
+//   middle: percentages + two-color bar (chat blue / game purple)
+// Last value is stored in the settings (shown after restart).
 import streamDeck, {
     action, DialRotateEvent, DialDownEvent, WillAppearEvent, DidReceiveSettingsEvent, SingletonAction,
 } from "@elgato/streamdeck";
@@ -43,22 +42,22 @@ function genSvg(chat: number, battery: number | null, s: DialSettings, statusTex
         ? `<text x="5" y="20" text-anchor="start" font-family="sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF">${header}</text>`
         : "";
     const game = 100 - chat;
-    // Bei Offline/No Dongle: Batteriewert unbekannt -> "???" in Weiss
+    // Offline / no dongle: battery unknown -> "???" in white
     const batValue = statusText ? "???" : (battery == null ? "--" : `${battery}%`);
     const batClr = statusText ? "#FFFFFF" : batColor(battery, s);
-    // Hintergrund: normal transparent. OFFLINE: transparent, Farbe nur im
-    // Status-Text. NO DONGLE: Farbe als Hintergrund, Text weiss.
+    // Background: transparent. OFFLINE: color only in the status text.
+    // NO DONGLE: color as background, white text.
     const isNoDongle = statusText === "NO DONGLE";
     const bg = isNoDongle ? statusBg : "none";
     const statusTextColor = isNoDongle ? "#FFFFFF" : statusBg;
 
     let body: string;
     if (statusText) {
-        // Statt Balken + Prozentwerten: Status-Text, passend gross
+        // Status text instead of bar and percentages
         body = `<text x="100" y="66" text-anchor="middle" font-family="sans-serif" font-size="26" font-weight="bold" fill="${statusTextColor}">${statusText}</text>`;
     } else {
-        // Balken in exakt den ATK-Massen: Rahmen 182x10 bei x=9/y=76,
-        // Spur 180x8, Fuellung 8 hoch mit rx=4.
+        // Bar with the ATK plugin's dimensions: frame 182x10 at x=9/y=76,
+        // track 180x8, fill 8 high with rx=4.
         const chatW = Math.round(180 * (chat / 100));
         const chatColor = s.chatColor ?? CHAT_COLOR_DEFAULT;
         const gameColor = s.gameColor ?? GAME_COLOR_DEFAULT;
@@ -112,7 +111,7 @@ export class ChatBalanceAction extends SingletonAction {
 
     override async onDidReceiveSettings(ev: DidReceiveSettingsEvent) {
         this.settings = ((ev.payload?.settings as DialSettings) ?? {});
-        this.lastSvg = ""; // Neuzeichnen erzwingen
+        this.lastSvg = ""; // force redraw
         await this.refresh(ev.action);
     }
 
@@ -167,12 +166,11 @@ export class ChatBalanceAction extends SingletonAction {
             const battery = typeof state.battery === "number" ? state.battery : null;
             const svg = genSvg(chat, battery, s, statusText, statusBg);
 
-            // Nichts geaendert -> nichts senden
+            // Nothing changed -> nothing to send
             if (svg === this.lastSvg) return;
 
-            // Throttle: waehrend schneller Event-Folgen (Rad am Headset)
-            // hoechstens alle RENDER_THROTTLE_MS ein Frame; der letzte
-            // Stand wird ueber den Trailing-Timer garantiert gezeichnet.
+            // Throttle: during fast event bursts (wheel on the headset) at most one
+            // frame per RENDER_THROTTLE_MS; the trailing timer draws the final state.
             const now = Date.now();
             const elapsed = now - this.lastRenderAt;
             if (elapsed < RENDER_THROTTLE_MS) {
@@ -189,6 +187,6 @@ export class ChatBalanceAction extends SingletonAction {
             this.lastSvg = svg;
             const b64 = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
             await action.setFeedback({ full_display: b64, title: "", value: "" });
-        } catch { /* nie werfen */ }
+        } catch { /* never throw */ }
     }
 }

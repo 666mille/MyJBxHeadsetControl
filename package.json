@@ -1,9 +1,9 @@
 {
     "scripts": {
-    "build": "rollup -c",
-    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.holgermilz.myjbxheadsetcontrol\"",
-    "pack": "rollup -c && streamdeck pack com.holgermilz.myjbxheadsetcontrol.sdPlugin"
-},
+        "build": "rollup -c",
+        "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.holgermilz.myjbxheadsetcontrol\"",
+        "pack": "rollup -c && streamdeck pack com.holgermilz.myjbxheadsetcontrol.sdPlugin"
+    },
     "type": "module",
     "devDependencies": {
         "@elgato/cli": "^1.7.4",
@@ -20,6 +20,7 @@
     },
     "dependencies": {
         "@elgato/streamdeck": "^2.0.0",
+        "koffi": "^3.3.3",
         "node-hid": "^3.3.0"
     }
 }
