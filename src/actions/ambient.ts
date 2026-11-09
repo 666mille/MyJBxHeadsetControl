@@ -1,6 +1,6 @@
 // src/actions/ambient.ts
 import streamDeck, { action, KeyDownEvent, WillAppearEvent, SingletonAction, KeyAction } from "@elgato/streamdeck";
-import { setAmbientAware } from "../jbl-usb"; // <-- Nativer USB-Aufruf
+import { setAmbientAware, syncAncState } from "../jbl-usb";
 import { readState } from "../state";
 import { svgIcon } from "../icons";
 
@@ -34,8 +34,10 @@ export class AmbientAction extends SingletonAction {
 
     override async onKeyDown(ev: KeyDownEvent) {
         try {
-            const isAmbientOn = !!readState().ambient_aware;
-            setAmbientAware(!isAmbientOn);
+            if (readState().connected) {
+                await syncAncState(); // real state, in case an event was missed
+                if (!(await setAmbientAware(!readState().ambient_aware))) await ev.action.showAlert();
+            }
         } catch (err) {
             streamDeck.logger.error(`setAmbientAware failed: ${err}`);
         }

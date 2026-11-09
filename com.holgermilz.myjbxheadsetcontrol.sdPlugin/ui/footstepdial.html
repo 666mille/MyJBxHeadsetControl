@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Footstep Booster Dial Settings</title>
+    <script src="sdpi-components.js"></script>
+  </head>
+  <body>
+    <sdpi-item label="Show header">
+      <sdpi-checkbox setting="showHeader" default="true" label="Show text in top-left corner"></sdpi-checkbox>
+    </sdpi-item>
+    <sdpi-item label="Header text">
+      <sdpi-textfield setting="headerText" default="JBL" placeholder="JBL"></sdpi-textfield>
+    </sdpi-item>
+
+    <sdpi-item label="On Color">
+      <sdpi-color setting="onColor" default="#27AE60"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Off Color">
+      <sdpi-color setting="offColor" default="#808080"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Choosing Color">
+      <sdpi-color setting="pendingColor" default="#FF9800"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="No QuantumENGINE Color">
+      <sdpi-color setting="unavailableColor" default="#6B4E16"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Offline Color">
+      <sdpi-color setting="offlineColor" default="#808080"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="No Dongle Color">
+      <sdpi-color setting="noDongleColor" default="#5A1A1A"></sdpi-color>
+    </sdpi-item>
+
+    <sdpi-item>
+      <p style="font-size: 11px; opacity: 0.7;">
+        Rotate to choose the game, rotate while pressed to change the strength, press or tap to
+        turn the Footstep Booster on/off. Needs JBL QuantumENGINE installed and its service running.
+      </p>
+    </sdpi-item>
+  </body>
+</html>

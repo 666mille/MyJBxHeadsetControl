@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Footstep Booster Settings</title>
+    <script src="sdpi-components.js"></script>
+  </head>
+  <body>
+    <sdpi-item label="Show header">
+      <sdpi-checkbox setting="showHeader" default="true" label="Show text in top-left corner"></sdpi-checkbox>
+    </sdpi-item>
+    <sdpi-item label="Header text">
+      <sdpi-textfield setting="headerText" default="JBL" placeholder="JBL"></sdpi-textfield>
+    </sdpi-item>
+    <sdpi-item label="Game">
+      <sdpi-select setting="game" datasource="getGames" loading="Loading games from QuantumENGINE…" hot-reload></sdpi-select>
+    </sdpi-item>
+    <sdpi-item>
+      <p style="font-size: 11px; opacity: 0.7;">
+        With a game chosen, a press switches the Footstep Booster to that game and turns it on;
+        a second press turns it off. Without a game the key only toggles on/off.
+      </p>
+    </sdpi-item>
+
+    <sdpi-item label="Show game">
+      <sdpi-checkbox setting="showGame" default="true" label="Show the selected game when on"></sdpi-checkbox>
+    </sdpi-item>
+
+    <sdpi-item label="On Color">
+      <sdpi-color setting="onColor" default="#1E8B3C"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Off Color">
+      <sdpi-color setting="offColor" default="#3D3D3D"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="No QuantumENGINE Color">
+      <sdpi-color setting="unavailableColor" default="#6B4E16"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="Offline Color">
+      <sdpi-color setting="offlineColor" default="#808080"></sdpi-color>
+    </sdpi-item>
+    <sdpi-item label="No Dongle Color">
+      <sdpi-color setting="noDongleColor" default="#5A1A1A"></sdpi-color>
+    </sdpi-item>
+
+    <sdpi-item>
+      <p style="font-size: 11px; opacity: 0.7;">
+        The Footstep Booster runs inside JBL QuantumENGINE on this PC, so QuantumENGINE must be
+        installed and its service running. The QuantumENGINE window shows changes made here only
+        after it is reopened.
+      </p>
+    </sdpi-item>
+  </body>
+</html>

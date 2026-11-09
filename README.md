@@ -28,13 +28,17 @@ Therefore, this plugin—and all future updates to my existing plugins—will ex
 | **Game-Chat Balance** | Dial | Custom display: JBL header, live battery readout, headset icon and a two-color balance bar. Rotate to adjust, press to reset to 50/50. Last value is persisted. |
 | **EQ Preset** | Key | Applies an EQ preset from QuantumENGINE - system presets and your own. Shows the preset name, highlighted when active. Optional: apply right when chosen in the Property Inspector. |
 | **EQ Preset Dial** | Dial | Rotate to browse all EQ presets, press or tap to apply. |
+| **Footstep Booster** | Key | Toggles the QuantumENGINE Footstep Booster on/off and shows the selected game profile. Optionally fixed to one game: a press switches to that game and turns it on, a second press turns it off. Needs QuantumENGINE running, see [Footstep Booster](#footstep-booster). |
+| **Footstep Booster Dial** | Dial | Rotate to choose the game, rotate while pressed to change the strength, press or tap for on/off. Shows game, state and strength. Needs QuantumENGINE running. |
 
 Every key can show a configurable header text (default `JBL`) in the top-left corner -
 toggle it on/off and change the text per action in the Property Inspector.
 
 All actions react instantly to changes made elsewhere (headset buttons, the wheel on
 the earcup, or QuantumENGINE) and show **OFFLINE** when the headset is powered off and
-**NO DONGLE** when the USB dongle is unplugged, including automatic reconnect. Offline
+**NO DONGLE** when the USB dongle is unplugged, including automatic reconnect. On start
+the plugin asks the dongle for the link state and all current values, so the keys are right
+even if the headset was switched on before the PC. Offline
 and No-Dongle colors are configurable per action.
 
 ## Requirements
@@ -43,6 +47,7 @@ and No-Dongle colors are configurable per action.
 - Elgato Stream Deck software 7.1+ (SDK v3, Node.js 20 plugin runtime)
 - Windows 10/11 (developed and tested on Windows; macOS untested)
 - For the EQ actions only: JBL QuantumENGINE installed (Windows), see [EQ presets](#eq-presets)
+- For the Footstep Booster only: JBL QuantumENGINE installed and its service running, see [Footstep Booster](#footstep-booster)
 
 ## Installation
 
@@ -92,6 +97,14 @@ npx tsx test-eq.ts send "FLAT"     # send a preset to the headset
 
 Quit the Stream Deck app first, so the plugin doesn't hold the dongle at the same time.
 
+#### Testing the Footstep Booster without a Stream Deck
+
+```bash
+npx tsx test-footstep.ts           # read state (on/off, game, strength)
+npx tsx test-footstep.ts on        # switch on (or off)
+npx tsx test-footstep.ts eq "FPS"  # switch the EQ preset through the service
+```
+
 ## Usage notes
 
 - **Close JBL QuantumENGINE** while using the plugin if you notice conflicts - both
@@ -105,7 +118,7 @@ The EQ actions use the presets you see in JBL QuantumENGINE, including your own:
 
 - Presets are read from `C:\ProgramData\QuantumENGINE\q950\q950.dat`. Create or edit
   presets in QuantumENGINE, they show up in the plugin automatically.
-- The headset expects precomputed filter coefficients. The plugin computes them with
+- Without the QuantumENGINE service, the headset expects precomputed filter coefficients. The plugin computes them with
   `libAirohaEQSerializeImp.dll` from your local QuantumENGINE installation (found
   automatically, or set the path in the Property Inspector). The DLL is **not** part of
   this plugin.
@@ -113,11 +126,73 @@ The EQ actions use the presets you see in JBL QuantumENGINE, including your own:
   with the data QuantumENGINE sends. If it doesn't match, the EQ actions stay locked and
   nothing is sent. This matters because a wrong coefficient block can mute the headset
   until a valid preset is sent.
-- QuantumENGINE doesn't notice presets applied by the plugin and keeps showing its own
-  last selection. The headset still uses the preset sent by the plugin.
+- **With QuantumENGINE running**, the plugin simply asks the QuantumENGINE service to
+  switch the preset, exactly like clicking it in QuantumENGINE. The QuantumENGINE window
+  follows right away, and presets chosen in QuantumENGINE show up on the keys and the dial
+  immediately (the service sends a notification).
+- **Without QuantumENGINE running**, the plugin computes the coefficients itself (below)
+  and sends them to the headset. QuantumENGINE then keeps showing its own last selection.
 
 Without QuantumENGINE installed, all other actions work as usual; the EQ actions show
 **Locked** in the Property Inspector.
+
+## Working together with QuantumENGINE
+
+When QuantumENGINE is installed and its service is running, the plugin sends mute, the
+game/chat balance and EQ presets **through the QuantumENGINE service** instead of straight to
+the dongle, so the QuantumENGINE window follows them right away and its stored settings stay
+in line with the headset. After a mute change the plugin asks the dongle whether it arrived
+and sends it over HID itself if not.
+
+Every mute, ANC, Ambient Aware and spatial sound key press reads the real state from the
+dongle first, then confirms that the headset took the change and retries once; otherwise
+the key shows an alert.
+
+ANC, Ambient Aware and spatial sound are sent over HID in any case: the headset reports them
+back like a button press on the earcup, which QuantumENGINE picks up and shows. Sent through
+the service, the headset would switch but the QuantumENGINE window would not be told.
+
+Without QuantumENGINE everything goes over HID as before.
+
+Pressing the knob on the base station (the Q950 dongle) makes the plugin refresh all values
+right away, so the keys follow whatever the knob is assigned to in QuantumENGINE.
+
+## Footstep Booster
+
+The Footstep Booster is different from every other feature here: it does not run on the
+headset. JBL QuantumENGINE boosts footsteps in the game audio on the PC before it is sent
+to the dongle, so there is nothing to switch over USB.
+
+- The plugin talks to the QuantumENGINE service (`QuantumServer.exe`) the same way the
+  QuantumENGINE app does, through `IPC.dll` from your local installation. The DLL is
+  **not** part of this plugin. QuantumENGINE has to be installed and its service running;
+  the QuantumENGINE window itself can stay closed.
+- Without the service the key shows **NO QUANTUM ENGINE**. Pressing it retries.
+- The plugin itself always shows the real state, because it reads it from the service
+  (and gets notified when it changes there).
+- The game and the strength can be set from the key (fixed game) and the dial.
+
+## What the QuantumENGINE window shows
+
+Tested with QuantumENGINE **v2.9.4**. Everything set from the Stream Deck is applied, but not
+everything shows up in the QuantumENGINE window right away:
+
+| Setting | Shown in the QuantumENGINE window |
+|---|---|
+| Mute, game/chat balance, EQ preset, ANC / Ambient Aware, Footstep game | immediately |
+| Footstep Booster on/off, Footstep strength, spatial sound | only after QuantumENGINE is restarted |
+
+This is how the QuantumENGINE service is built, not a plugin problem: when a client sets the
+footstep game, the service tells all other clients (including its own window); for footstep
+on/off, strength and the spatial sound mode it stores and applies the value but does not tell
+anyone. The only on/off path that does notify is the knob on the base station, which is fed
+by the hardware and cannot be triggered from software. A switch of the QuantumENGINE profile
+would refresh the window too, but it reloads the saved profile and would undo the change.
+
+The values are stored in the QuantumENGINE profile, so after a restart of QuantumENGINE (or
+the PC) the window is correct again, and the headset never gets out of sync with the service.
+A future QuantumENGINE version may add the missing notifications; then the window will follow
+without any change to the plugin.
 
 ## Troubleshooting
 

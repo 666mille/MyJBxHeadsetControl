@@ -6,8 +6,9 @@
 //
 // Optional: --dll "PATH\libAirohaEQSerializeImp.dll"
 import * as fs from "fs";
-import { HID, devices } from "node-hid";
+import { HID } from "node-hid";
 import { initEngine, readPresets, buildInfo, computeCurve } from "./src/eq-engine";
+import { findJblPath } from "./src/jbl-path";
 
 const args = process.argv.slice(2);
 const dllIdx = args.indexOf("--dll");
@@ -60,10 +61,9 @@ if (cmd === "list") {
     if (!p) { console.log(`Preset "${arg}" not found in q950.dat`); process.exit(1); }
     const info = buildInfo(p);
     const curve = computeCurve(p);
-    const m = devices().filter((d) => d.vendorId === 0x0ecb && d.productId === 0x2127 && d.interface === 5);
-    const target = m[3] ?? m[0];
-    if (!target?.path) { console.log("Dongle not found"); process.exit(1); }
-    const dev = new HID(target.path);
+    const path = findJblPath((level, msg) => console.log(`[${level}] ${msg}`));
+    if (!path) { console.log("Dongle not found"); process.exit(1); }
+    const dev = new HID(path);
     try {
         sendFeatureData(dev, 0x02, 0x0e, info);
         await new Promise((r) => setTimeout(r, 150)); // short pause like QuantumENGINE

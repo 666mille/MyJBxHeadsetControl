@@ -24,6 +24,7 @@ try {
 // real headset events on every start.
 memoryState.connected = false;
 delete memoryState.dongle_present;
+delete memoryState.qe_available; // checked live against the QuantumENGINE service
 
 // --- Subscription ---
 type Listener = () => void;

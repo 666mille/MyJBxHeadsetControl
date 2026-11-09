@@ -5,5 +5,7 @@ streamDeckClient.sendToPropertyInspector.subscribe((msg) => {
     if (!p || p.event !== "engineStatus") return;
     const el = document.getElementById("engine");
     el.className = p.ok ? "ok" : "err";
-    el.textContent = p.ok ? "Ready (self-test OK)" : ("Locked: " + p.error);
+    el.textContent = !p.ok ? ("Locked: " + p.error)
+        : p.mode === "service" ? "Ready (via QuantumENGINE)"
+        : "Ready (own engine, self-test OK)";
 });

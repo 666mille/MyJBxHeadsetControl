@@ -5,7 +5,7 @@
 // kein setImage, da vom Nutzer gesetzte Bilder Vorrang haetten und
 // Plugin-Overlays dann unsichtbar waeren.
 import streamDeck, { action, KeyDownEvent, WillAppearEvent, DidReceiveSettingsEvent, SingletonAction } from "@elgato/streamdeck";
-import { setMute } from "../jbl-usb";
+import { toggleMute } from "../jbl-usb";
 import { readState, onStateChange } from "../state";
 import { disconnectedIcon } from "../icons";
 
@@ -40,7 +40,8 @@ export class MuteAction extends SingletonAction {
     override async onKeyDown(ev: KeyDownEvent) {
         try {
             if (readState().connected) {
-                setMute(!readState().muted);
+                // reads the real state first, confirms afterwards, retries once
+                if (!(await toggleMute())) await ev.action.showAlert();
             }
         } catch (err) { streamDeck.logger.error(`setMute failed: ${err}`); }
         await this.refresh(ev.action);

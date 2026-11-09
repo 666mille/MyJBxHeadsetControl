@@ -2,7 +2,7 @@
 // refresh() ruft NIE getSettings() -- Settings werden gecacht
 // (getSettings -> didReceiveSettings -> refresh waere eine Endlosschleife).
 import streamDeck, { action, KeyDownEvent, WillAppearEvent, DidReceiveSettingsEvent, SingletonAction } from "@elgato/streamdeck";
-import { setSpatialSound } from "../jbl-usb";
+import { setSpatialSound, syncSpatialState } from "../jbl-usb";
 import { readState, onStateChange } from "../state";
 import { svgIcon, disconnectedIcon } from "../icons";
 
@@ -42,8 +42,9 @@ export class SpatialAction extends SingletonAction {
     override async onKeyDown(ev: KeyDownEvent) {
         try {
             if (readState().connected) {
+                await syncSpatialState(); // real state, in case an event was missed
                 const cur: SpatialMode = readState().spatial_sound ?? "off";
-                setSpatialSound(MODES[(MODES.indexOf(cur) + 1) % MODES.length]);
+                if (!(await setSpatialSound(MODES[(MODES.indexOf(cur) + 1) % MODES.length]))) await ev.action.showAlert();
             }
         } catch (err) { streamDeck.logger.error(`setSpatialSound failed: ${err}`); }
         await this.refresh(ev.action);

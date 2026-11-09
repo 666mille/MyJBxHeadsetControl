@@ -4,7 +4,7 @@
 // didReceiveSettings-Event, dessen Handler wieder refresh() ruft ->
 // Endlosschleife. Settings werden gecacht.
 import streamDeck, { action, KeyDownEvent, WillAppearEvent, DidReceiveSettingsEvent, SingletonAction } from "@elgato/streamdeck";
-import { setAnc, setAmbientAware } from "../jbl-usb";
+import { setAnc, setAmbientAware, syncAncState } from "../jbl-usb";
 import { readState, onStateChange } from "../state";
 import { svgIcon, disconnectedIcon } from "../icons";
 
@@ -23,10 +23,10 @@ function currentMode(): AncMode {
     return "off";
 }
 
-function applyMode(mode: AncMode): void {
-    if (mode === "anc") setAnc(true);
-    else if (mode === "ambient") setAmbientAware(true);
-    else setAnc(false);
+function applyMode(mode: AncMode): Promise<boolean> {
+    if (mode === "anc") return setAnc(true);
+    if (mode === "ambient") return setAmbientAware(true);
+    return setAnc(false);
 }
 
 @action({ UUID: "com.holgermilz.myjbxheadsetcontrol.anc" })
@@ -57,8 +57,9 @@ export class AncAction extends SingletonAction {
     override async onKeyDown(ev: KeyDownEvent) {
         try {
             if (readState().connected) {
+                await syncAncState(); // real state, in case an event was missed
                 const next = MODES[(MODES.indexOf(currentMode()) + 1) % MODES.length];
-                applyMode(next);
+                if (!(await applyMode(next))) await ev.action.showAlert();
             }
         } catch (err) { streamDeck.logger.error(`ANC toggle failed: ${err}`); }
         await this.refresh(ev.action);

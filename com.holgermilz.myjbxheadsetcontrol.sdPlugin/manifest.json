@@ -1,6 +1,6 @@
 {
 	"Name": "JBxHeadsetControl",
-	"Version": "2.0.0.0",
+	"Version": "2.1.0.0",
 	"Author": "holgermilz",
 	"Actions": [
 		{
@@ -146,12 +146,52 @@
 					"TitleAlignment": "middle"
 				}
 			]
+		},
+		{
+			"Name": "Footstep Booster",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.footstep",
+			"Icon": "imgs/actions/footstep/icon",
+			"Tooltip": "Toggle the QuantumENGINE Footstep Booster",
+			"PropertyInspectorPath": "ui/footstep.html",
+			"Controllers": [
+				"Keypad"
+			],
+			"States": [
+				{
+					"Image": "imgs/actions/footstep/key",
+					"TitleAlignment": "middle"
+				}
+			]
+		},
+		{
+			"Name": "Footstep Booster Dial",
+			"UUID": "com.holgermilz.myjbxheadsetcontrol.footstepdial",
+			"Icon": "imgs/actions/footstepdial/icon",
+			"Tooltip": "Rotate to choose the game, press to turn the Footstep Booster on/off",
+			"PropertyInspectorPath": "ui/footstepdial.html",
+			"Controllers": [
+				"Encoder"
+			],
+			"Encoder": {
+				"layout": "layouts/footstepdial.json",
+				"TriggerDescription": {
+					"Rotate": "Choose game (pressed: strength)",
+					"Push": "On / off",
+					"Touch": "On / off"
+				}
+			},
+			"States": [
+				{
+					"Image": "imgs/actions/footstepdial/key",
+					"TitleAlignment": "middle"
+				}
+			]
 		}
 	],
 	"Category": "JBxHeadsetControl",
 	"CategoryIcon": "imgs/plugin/category-icon",
 	"CodePath": "bin/plugin.js",
-	"Description": "Controls mute, ANC, Ambient Aware, spatial sound, game-chat balance and EQ presets on the JBL Quantum 950, with live battery status.",
+	"Description": "Controls mute, ANC, Ambient Aware, spatial sound, game-chat balance, EQ presets and the Footstep Booster on the JBL Quantum 950, with live battery status.",
 	"Icon": "imgs/plugin/marketplace",
 	"SDKVersion": 3,
 	"Software": {

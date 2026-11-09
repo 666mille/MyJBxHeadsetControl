@@ -8,6 +8,7 @@ import { applyEqPreset } from "../jbl-usb";
 import { onStateChange, readState } from "../state";
 import { svgIcon, disconnectedIcon } from "../icons";
 import { ensureEngine, activePreset, answerPresetList } from "../eq-common";
+import { acquireEq, releaseEq } from "../eq-service";
 
 type EqKeySettings = {
     preset?: string;
@@ -40,6 +41,7 @@ export class EqKeyAction extends SingletonAction<EqKeySettings> {
     private settings = new Map<string, EqKeySettings>();
 
     override async onWillAppear(ev: WillAppearEvent<EqKeySettings>) {
+        acquireEq(); // live preset from QuantumENGINE (notify + poll)
         await ensureEngine();
         this.settings.set(ev.action.id, ev.payload.settings);
         await this.refresh(ev.action);
@@ -47,6 +49,7 @@ export class EqKeyAction extends SingletonAction<EqKeySettings> {
     }
 
     override async onWillDisappear(ev: WillDisappearEvent<EqKeySettings>) {
+        releaseEq();
         this.unsubs.get(ev.action.id)?.();
         this.unsubs.delete(ev.action.id);
         this.settings.delete(ev.action.id);

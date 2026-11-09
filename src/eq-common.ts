@@ -26,7 +26,8 @@ export function presetNames(): string[] {
     try { return readPresets().presets.map(p => p.name); } catch { return []; }
 }
 
-// Last preset sent by the plugin, otherwise the one from q950.dat
+// Active preset: reported live by QuantumENGINE (eq-service.ts) or the last one sent
+// by the plugin, otherwise the one stored in q950.dat
 export function activePreset(): string | null {
     const s = readState();
     if (s.eq_preset) return s.eq_preset;
@@ -51,10 +52,12 @@ export async function answerPresetList(): Promise<void> {
     }
     if (!items.length) items = [{ label: "No presets found", value: "", disabled: true }];
     const status = engineStatus();
+    const viaService = readState().qe_available === true;
     await streamDeck.ui.sendToPropertyInspector({ event: "getPresets", items });
     await streamDeck.ui.sendToPropertyInspector({
         event: "engineStatus",
-        ok: status.ok && !datError,
+        ok: (viaService || status.ok) && !datError,
+        mode: viaService ? "service" : "dll",
         error: datError || status.error || "not initialized",
     });
 }

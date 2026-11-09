@@ -11,6 +11,7 @@ import streamDeck, {
 import { applyEqPreset } from "../jbl-usb";
 import { onStateChange, readState } from "../state";
 import { ensureEngine, activePreset, presetNames, answerPresetList } from "../eq-common";
+import { acquireEq, releaseEq } from "../eq-service";
 
 const REVERT_MS = 3000;
 
@@ -114,6 +115,7 @@ export class EqDialAction extends SingletonAction<EqDialSettings> {
     private lastSvg = new Map<string, string>();
 
     override async onWillAppear(ev: WillAppearEvent<EqDialSettings>) {
+        acquireEq(); // live preset from QuantumENGINE (notify + poll)
         await ensureEngine();
         this.settings.set(ev.action.id, ev.payload.settings);
         const start = activePreset() ?? ev.payload.settings.preset ?? presetNames()[0];
@@ -123,6 +125,7 @@ export class EqDialAction extends SingletonAction<EqDialSettings> {
     }
 
     override async onWillDisappear(ev: WillDisappearEvent<EqDialSettings>) {
+        releaseEq();
         this.unsubs.get(ev.action.id)?.();
         this.unsubs.delete(ev.action.id);
         this.clearRevert(ev.action.id);

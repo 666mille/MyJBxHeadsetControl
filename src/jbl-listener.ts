@@ -3,13 +3,33 @@
 //
 // Events come from the DONGLE, which also sends packets while the headset is off.
 // So only known status codes and IMU data count as "headset is on".
+//
+// data[3] is the category: 0x03 = event, 0x01 = answer to a GET (jbl-device.ts
+// queryState), 0x02 = ack of a SET. The dongle answers GETs from its cache even
+// while the headset is off, so answers update the values but are no sign of life;
+// only 0x35 tells the real link state.
 import { updateState, readState } from "./state";
-import { startDevice } from "./jbl-device";
+import { startDevice, deliverGetAnswer, queryState } from "./jbl-device";
+import { checkNow } from "./qe-service";
+
+// Base station knob (Q950 base station = the dongle): event ID 0x0FA0, value 1 = pressed,
+// 2 = released. QuantumENGINE runs whatever is assigned to the knob (footstep, mute, EQ, ...).
+// After release, refresh everything right away so the keys follow without waiting for the poll.
+const KNOB_REFRESH_DELAY_MS = 400;
+let knobTimer: NodeJS.Timeout | null = null;
+function onKnobReleased(): void {
+    if (knobTimer) clearTimeout(knobTimer);
+    knobTimer = setTimeout(() => {
+        knobTimer = null;
+        queryState();             // HID values from the dongle
+        checkNow().catch(() => undefined); // footstep / EQ from the QuantumENGINE service
+    }, KNOB_REFRESH_DELAY_MS);
+}
 
 // State starts as offline (see state.ts). The first real sign of life switches
 // to online until the explicit 0x35 offline event or the dongle disappears.
 // No timeout: events only arrive on changes.
-function markAlive(): void {
+function markAliveFn(): void {
     if (!readState().connected) {
         updateState("connected", true);
     }
@@ -20,13 +40,21 @@ function parseEvent(data: Buffer): void {
 
     // IMU data (head tracking) only comes from a powered-on headset
     if (data[7] === 0x1a) {
-        markAlive();
+        markAliveFn();
         return;
     }
 
     const codeA = data[11];
     const codeB = data[12];
     const value = data[15];
+    const markAlive = data[3] === 0x01 ? () => { /* cached answer */ } : markAliveFn;
+    if (data[3] === 0x01) deliverGetAnswer(codeA, codeB, value);
+
+    // knob of the base station: 86 00 dd 03 .. 08 00 00 00 a0 0f 02 00 <01|02> 00
+    if (codeA === 0xa0 && codeB === 0x0f) {
+        if (data[3] === 0x03 && value === 0x02) onKnobReleased();
+        return; // dongle input, not a sign of life of the headset
+    }
 
     if (codeA === 0x0d && codeB === 0x00) {
         markAlive();
