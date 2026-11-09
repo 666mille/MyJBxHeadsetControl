@@ -1,73 +1,44 @@
-# MyJBxHeadsetControl v2.1.0
+My JBx Headset Control v2.1.0 – Footstep Booster & QuantumENGINE integration
 
-## New: Footstep Booster key
+Control your **JBL Quantum 950 Wireless** from an Elgato Stream Deck – now with the **Footstep Booster** and full **QuantumENGINE integration**: changes made on the Stream Deck show up in QuantumENGINE, and changes made in QuantumENGINE show up on the Stream Deck.
 
-Toggles the **Footstep Booster** from JBL QuantumENGINE and shows its state and the selected
-game profile (e.g. *Counter-Strike 2*).
+### What's new
+- **Footstep Booster** (key) – toggles the QuantumENGINE Footstep Booster and shows its state and game profile. Optionally fixed to one game: a press switches to that game and turns it on, a second press turns it off (e.g. one key for CS2, one for Overwatch 2).
+- **Footstep Booster Dial** (dial) – rotate to choose the game, rotate while pressed to change the strength, press or tap for on/off.
+- **QuantumENGINE follows the Stream Deck** – mute, game/chat balance and EQ presets go through the QuantumENGINE service when it runs, so its window updates right away.
+- **Live updates from QuantumENGINE** – presets and settings changed in QuantumENGINE appear on the keys and dials immediately.
+- **Every key press is checked** – mute, ANC, Ambient Aware and spatial sound read the real state first, confirm the change and retry once; otherwise the key shows an alert.
+- **Correct state right after start** – a headset that was already on when the PC started no longer shows OFFLINE.
 
-The Footstep Booster runs inside QuantumENGINE on your PC, not on the headset, so this key
-needs QuantumENGINE installed and its service running (the QuantumENGINE window can stay
-closed). The plugin uses `IPC.dll` from your local QuantumENGINE installation; nothing from
-JBL is shipped with the plugin. Without the service the key shows **NO QUANTUM ENGINE**.
+### Actions
+- **Mute** – microphone icon: white when live, red and crossed out when muted
+- **ANC / Ambient** – Off / Noise Cancelling / Ambient Aware, colors configurable
+- **Spatial Sound** – Off / Fixed / Head Tracking, colors configurable
+- **Battery** – battery graphic that fills according to the charge level
+- **Game-Chat Balance** (dial) – JBL header, live battery readout, headset icon and a two-color balance bar; rotate to adjust, press to reset to 50/50
+- **EQ Preset** (key) – applies an EQ preset from JBL QuantumENGINE, highlighted when active
+- **EQ Preset Dial** (dial) – rotate to browse all presets, press or tap to apply
+- **Footstep Booster** (key) – new
+- **Footstep Booster Dial** (dial) – new
 
-Note: the QuantumENGINE window shows changes made from the Stream Deck only after it is
-reopened. Changes made in QuantumENGINE show up on the key within a few seconds.
+### Fixed
+- **Headset stays OFFLINE after a QuantumENGINE update** – Windows can list the dongle's HID collections in a different order after a driver reinstall; the plugin now finds the right one regardless of the order and reconnects when the path changes.
 
-## Footstep Booster: choose the game
+### Highlights
+- Configurable **header text** (default `JBL`) on every key and dial – toggle on/off and change the text per action
+- Configurable colors and separate Offline / No-Dongle backgrounds
+- **Works with or without QuantumENGINE**: with its service running, settings go through it; without it, everything goes over HID as before
+- All keys and dials update instantly when anything changes
 
-- **Footstep key** can be fixed to a game in the Property Inspector: a press switches to that
-  game and turns the booster on, a second press turns it off (e.g. one key for CS2, one for
-  Overwatch 2).
-- **New Footstep Booster Dial**: rotate to choose the game, rotate while pressed to change the
-  strength, press or tap for on/off.
+### Requirements
+- Windows 10/11 and Stream Deck software 7.1+
+- **Footstep Booster** actions: JBL QuantumENGINE installed and its service running (the window can stay closed). The Footstep Booster runs inside QuantumENGINE on the PC, not on the headset. Without the service the actions show **NO QUANTUM ENGINE**.
+- **EQ** actions: JBL QuantumENGINE installed. With its service running, presets are switched by QuantumENGINE itself; otherwise the plugin computes the coefficients with QuantumENGINE's local DLL, as in v2.0.0.
+- All other actions work without QuantumENGINE.
+- Nothing from JBL is included in this plugin – it uses the files of your local QuantumENGINE installation.
 
-## QuantumENGINE follows the Stream Deck
+### Note on the QuantumENGINE window
+Tested with QuantumENGINE v2.9.4. **Footstep on/off, footstep strength and spatial sound** are applied right away, but the QuantumENGINE window shows them only after QuantumENGINE is restarted – its service does not announce these changes to other programs. Everything else (mute, balance, EQ, ANC / Ambient, footstep game) shows up immediately. The plugin itself always shows the real state.
 
-With QuantumENGINE running, mute and the game/chat balance are now sent through the
-QuantumENGINE service, so its window follows right away (before, the balance did not show up
-there). ANC, Ambient Aware and spatial sound stay on HID, where the headset reports them back
-and QuantumENGINE shows them as before. Without QuantumENGINE nothing changes.
-
-## EQ through QuantumENGINE
-
-With QuantumENGINE running, the EQ key and dial now ask the QuantumENGINE service to switch
-the preset, exactly like clicking it there. The QuantumENGINE window follows immediately,
-and presets chosen in QuantumENGINE show up on the keys and the dial right away.
-Without QuantumENGINE running, the plugin falls back to computing and sending the
-coefficients itself, as before. The Property Inspector shows which way is used.
-
-## Every key press is checked
-
-Mute, ANC, Ambient Aware and spatial sound keys now read the real state from the dongle
-before switching (so a missed event can no longer make a press "do nothing"), confirm
-afterwards that the headset took the change, and retry once. If it still did not arrive,
-the key shows an alert instead of a wrong state.
-
-## Base station knob
-
-When the knob on the base station is pressed (whatever it is assigned to in QuantumENGINE:
-Footstep Booster, mic, EQ, ...), the plugin refreshes all values right away, so the keys
-follow immediately instead of on the next poll.
-
-## Correct state right after start
-
-The plugin now asks the dongle for the link state and all current values (battery, mute,
-ANC, Ambient Aware, spatial sound, game/chat balance) when it connects. Before, a headset
-that was already switched on when the PC started stayed **OFFLINE** until the first event.
-
-## Fix: headset stays OFFLINE after a QuantumENGINE update
-
-After a QuantumENGINE update, Windows can return the dongle's HID collections in a different
-order. The plugin picked the collection by its position in that list, opened the wrong one
-and never received any status events: every key showed **OFFLINE** although the headset was
-on. "NO DONGLE" still worked.
-
-The plugin now finds the right collection independently of the list order (usage page
-`0xff12`, falling back to the `&Col04` path, then to actively probing each collection with
-the same harmless poll QuantumENGINE sends). The watchdog also reconnects when the
-collection path changes while the dongle stays plugged in.
-
-## Install
-
-Download the `.streamDeckPlugin` file below and double-click it. If an older version is
-installed, it is replaced. Requires Windows 10/11 and Stream Deck software 7.1+.
+### Install
+Download `com.holgermilz.myjbxheadsetcontrol.streamDeckPlugin` below and double-click it. An older version is replaced.
