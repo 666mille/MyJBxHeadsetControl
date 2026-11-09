@@ -4,13 +4,13 @@ A Stream Deck plugin for the **JBL Quantum 950 Wireless** headset.
 
 ![Stream Deck showing the plugin actions](docs/screenshot.png)
 
-Control your JBL Quantum 950 Wireless headset directly from an Elgato Stream Deck -
-JBL QuantumENGINE doesn't need to be running. The plugin talks to the headset's USB dongle
-over a reverse-engineered HID protocol and shows live status on your keys and dials.
-EQ presets are read from your QuantumENGINE installation (see [EQ presets](#eq-presets)).
+Control your JBL Quantum 950 Wireless headset directly from an Elgato Stream Deck. The plugin
+talks to the headset's USB dongle and shows live status on your keys and dials. Most actions
+work without JBL QuantumENGINE; when it is installed and running, the plugin works together
+with it (see [Working together with QuantumENGINE](#working-together-with-quantumengine)).
 
-> This project is not affiliated with, endorsed by, or supported by JBL / HARMAN.
-> Use at your own risk. The author is not responsible for any hardware damage or software conflicts.
+> Independent, unofficial project – not affiliated with, endorsed by or supported by JBL /
+> HARMAN. No JBL software is included. Use at your own risk – see [Disclaimer](#disclaimer).
 
 ### Why is this not on the Elgato Marketplace?
 Due to recent changes in the Elgato Maker Agreement, developers are now required to accept comprehensive personal liability and indemnification clauses under Californian law. As an independent developer offering free, open-source hobby projects, I cannot accept these legal and financial risks.
@@ -182,16 +182,13 @@ everything shows up in the QuantumENGINE window right away:
 | Mute, game/chat balance, EQ preset, ANC / Ambient Aware, Footstep game | immediately |
 | Footstep Booster on/off, Footstep strength, spatial sound | only after QuantumENGINE is restarted |
 
-This is how the QuantumENGINE service is built, not a plugin problem: when a client sets the
-footstep game, the service tells all other clients (including its own window); for footstep
-on/off, strength and the spatial sound mode it stores and applies the value but does not tell
-anyone. The only on/off path that does notify is the knob on the base station, which is fed
-by the hardware and cannot be triggered from software. A switch of the QuantumENGINE profile
-would refresh the window too, but it reloads the saved profile and would undo the change.
+This is a limitation of QuantumENGINE, not of the plugin: for these three settings
+QuantumENGINE does not refresh its window when another program changes them, while it does
+for all the others.
 
-The values are stored in the QuantumENGINE profile, so after a restart of QuantumENGINE (or
-the PC) the window is correct again, and the headset never gets out of sync with the service.
-A future QuantumENGINE version may add the missing notifications; then the window will follow
+The values are applied and stored by QuantumENGINE, so after a restart of QuantumENGINE (or
+the PC) its window is correct again, and the headset never gets out of sync with it. If a
+future QuantumENGINE version refreshes the window for these settings too, it will follow
 without any change to the plugin.
 
 ## Troubleshooting
@@ -274,6 +271,22 @@ the same:
 Why not compute the coefficients without the DLL? The exact fixed-point format and
 ordering inside the 858-byte block could be partly reverse-engineered, but not byte-exact.
 Using JBL's own function guarantees the headset gets the same data as from QuantumENGINE.
+
+## Disclaimer
+
+This is an independent, unofficial hobby project. It is **not affiliated with, endorsed by or
+supported by JBL or HARMAN International**. JBL, Quantum and QuantumENGINE are trademarks of
+their respective owners and are used here only to describe which products the plugin works with.
+
+- **No JBL software or files are included** in this repository or in the released plugin. Where
+  the plugin uses parts of QuantumENGINE (EQ coefficients, the QuantumENGINE service), it loads
+  them from the user's own, legally installed QuantumENGINE at runtime.
+- The USB protocol and the interfaces to QuantumENGINE were analysed **solely to make this
+  independently written plugin interoperable** with the headset and with QuantumENGINE. The
+  repository contains only original code and descriptions of observable behaviour.
+- The plugin sends commands to your headset. It is provided **"as is", without warranty of any
+  kind** (see [License](#license)) – use it at your own risk. The author is not responsible for
+  hardware damage, data loss or conflicts with other software.
 
 ## Credits
 
