@@ -36,6 +36,7 @@ let hClient: any = null;
 let hIpc: any = null;
 let channelName = "";
 let consistentMsgs: any[] = [];
+let disposed = false; // plugin shutdown: no new IPC.dll calls, callbacks are ignored
 
 type NotifyHandler = (id: number, payload: Buffer) => void;
 let notifyHandler: NotifyHandler | null = null;
@@ -89,7 +90,7 @@ function load(): void {
     // All other DLL calls are async, so the main thread is never blocked inside the DLL.
     msgCallback = koffi.register((_ctx: any, msg: any) => {
         try {
-            if (isNull(msg) || !notifyHandler) return;
+            if (disposed || isNull(msg) || !notifyHandler) return;
             const len = koffi.decode(msg, 4, "uint32");
             if (len < 8 || len > 65536) return;
             const id = koffi.decode(msg, "uint32") & 0xffff;
@@ -129,6 +130,7 @@ function initOnce(): void {
 
 /** Opens (or reuses) the channel: "new", "open", or false if the service is not reachable. */
 export async function openChannel(name: string): Promise<"new" | "open" | false> {
+    if (disposed) return false;
     load();
     initOnce();
     if (hIpc && channelName === name) return "open";
@@ -178,6 +180,19 @@ export async function resetClient(): Promise<void> {
     hClient = null;
 }
 
+/**
+ * Plugin shutdown: close the channel and the client registration, block further calls.
+ * The koffi callback stays registered on purpose (IPC.dll could still hold the pointer),
+ * it just returns immediately from now on.
+ */
+export async function dispose(): Promise<void> {
+    if (disposed) return;
+    disposed = true;
+    notifyHandler = null;
+    if (!api) return; // IPC.dll was never loaded
+    await resetClient();
+}
+
 function header(id: number, payloadLen: number): Buffer {
     const b = Buffer.alloc(8 + payloadLen);
     b.writeUInt32LE(id, 0);
@@ -187,7 +202,7 @@ function header(id: number, payloadLen: number): Buffer {
 
 /** Sends a Get message and returns the payload of the response, or null on timeout. */
 export async function getSync(getId: number, respId: number): Promise<Buffer | null> {
-    if (!hIpc) return null;
+    if (disposed || !hIpc) return null;
     const p = await call(api.sendSync, hIpc, header(getId, 0), respId, SYNC_TIMEOUT_MS);
     if (isNull(p)) return null;
     try {
@@ -200,14 +215,14 @@ export async function getSync(getId: number, respId: number): Promise<Buffer | n
 }
 
 export async function sendInt(id: number, value: number, unsigned = false): Promise<boolean> {
-    if (!hIpc) return false;
+    if (disposed || !hIpc) return false;
     const b = header(id, 4);
     if (unsigned) b.writeUInt32LE(value >>> 0, 8); else b.writeInt32LE(value | 0, 8);
     return (await call<number>(api.send, hIpc, b)) !== 0;
 }
 
 export async function sendString(id: number, value: string): Promise<boolean> {
-    if (!hIpc) return false;
+    if (disposed || !hIpc || typeof value !== "string") return false; // Buffer.from(undefined) throws
     const s = Buffer.from(value, "utf16le");
     const b = header(id, 4 + s.length);
     b.writeUInt32LE(s.length, 8);
@@ -217,7 +232,7 @@ export async function sendString(id: number, value: string): Promise<boolean> {
 
 /** Sends a message with an arbitrary packed payload (e.g. a 1-byte state or a struct). */
 export async function sendPayload(id: number, payload: Buffer): Promise<boolean> {
-    if (!hIpc) return false;
+    if (disposed || !hIpc) return false;
     const b = header(id, payload.length);
     payload.copy(b, 8);
     return (await call<number>(api.send, hIpc, b)) !== 0;

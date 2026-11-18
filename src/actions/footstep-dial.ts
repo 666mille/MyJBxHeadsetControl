@@ -179,9 +179,14 @@ export class FootstepDialAction extends SingletonAction<FootstepDialSettings> {
             if (d.gameTimer) clearTimeout(d.gameTimer);
             d.gameTimer = setTimeout(async () => {
                 d.gameTimer = undefined;
-                const g = d.game!;
-                if (!(await setFootstepGame(g))) await ev.action.showAlert();
+                const g = d.game;
                 d.game = undefined;
+                try {
+                    // d.game can be cleared in between (press/refresh) -> nothing to send
+                    if (g && !(await setFootstepGame(g))) await ev.action.showAlert();
+                } catch (err) {
+                    streamDeck.logger.error(`setFootstepGame failed: ${err}`);
+                }
                 this.refresh(ev.action);
             }, SEND_DELAY_MS);
         }

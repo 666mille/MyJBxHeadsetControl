@@ -24,6 +24,7 @@ let queue: Promise<any> = Promise.resolve();
 let lastFailure = 0;
 let lastError = "";
 let lastSubscribe = 0;
+let stopped = false;
 
 /**
  * Right after subscribing, the service answers every subscription with its cached value.
@@ -81,6 +82,7 @@ function markAvailable(): void {
  * force = true for user actions: ignore the retry pause after a failure.
  */
 export async function ensureChannel(force = false): Promise<boolean> {
+    if (stopped) return false;
     if (!readState().connected) return false; // the product channel needs the headset
     if (!force && readState().qe_available === false && Date.now() - lastFailure < RETRY_MS) return false;
     const name = channelName();
@@ -113,7 +115,9 @@ async function runPollers(): Promise<boolean> {
 }
 
 async function poll(force = false): Promise<void> {
+    if (stopped) return;
     await serial(async () => {
+        if (stopped) return;
         if (!(await ensureChannel(force))) return;
         if (await runPollers()) { markAvailable(); return; }
         // The channel can go stale (headset reconnected, service restarted):
@@ -132,6 +136,7 @@ export function checkNow(): Promise<void> {
 
 /** Polling and subscriptions run while at least one action using the service is visible. */
 export function acquireService(): void {
+    if (stopped) return;
     users++;
     if (pollTimer) return;
     poll();
@@ -145,6 +150,17 @@ export function releaseService(): void {
         pollTimer = null;
         serial(() => ipc.closeChannel()); // also ends the subscriptions
     }
+}
+
+/**
+ * Plugin shutdown: stop the poll and close channel + client registration in IPC.dll.
+ * Not queued behind serial(): a pending call must not delay the shutdown
+ * (lifecycle.ts exits after a hard deadline anyway).
+ */
+export async function shutdownService(): Promise<void> {
+    stopped = true;
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    await ipc.dispose();
 }
 
 export { getSync, sendInt, sendString, sendPayload, decodeString } from "./qe-ipc";

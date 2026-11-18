@@ -21,6 +21,7 @@
     "dependencies": {
         "@elgato/streamdeck": "^2.0.0",
         "koffi": "^3.3.3",
-        "node-hid": "^3.3.0"
+        "node-hid": "^3.3.0",
+        "ws": "^8.23.0"
     }
 }

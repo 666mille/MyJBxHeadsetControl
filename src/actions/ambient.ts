@@ -1,12 +1,12 @@
 // src/actions/ambient.ts
-import streamDeck, { action, KeyDownEvent, WillAppearEvent, SingletonAction, KeyAction } from "@elgato/streamdeck";
+import streamDeck, { action, KeyDownEvent, WillAppearEvent, WillDisappearEvent, SingletonAction, KeyAction } from "@elgato/streamdeck";
 import { setAmbientAware, syncAncState } from "../jbl-usb";
 import { readState } from "../state";
 import { svgIcon } from "../icons";
 
 @action({ UUID: "com.holgermilz.myjbxheadsetcontrol.ambient" })
 export class AmbientAction extends SingletonAction {
-    private interval?: NodeJS.Timeout;
+    private intervals = new Map<string, NodeJS.Timeout>(); // per action instance
 
     override async onWillAppear(ev: WillAppearEvent) {
         // Typsicherheit für das Display
@@ -14,7 +14,9 @@ export class AmbientAction extends SingletonAction {
             await this.refresh(ev.action);
         }
         
-        this.interval = setInterval(async () => {
+        const old = this.intervals.get(ev.action.id);
+        if (old) clearInterval(old);
+        this.intervals.set(ev.action.id, setInterval(async () => {
             try {
                 if (ev.action.isKey()) {
                     await this.refresh(ev.action); // Hier passiert vermutlich der USB-Zugriff
@@ -23,13 +25,13 @@ export class AmbientAction extends SingletonAction {
                 // Der Fehler wird abgefangen! Das Plugin stürzt NICHT mehr ab (Exit 1 ist Geschichte).
                 console.error("Fehler im Hintergrund-Intervall:", err);
             }
-        }, 2000);
-            }
+        }, 2000));
+    }
 
-    override async onWillDisappear() {
-        if (this.interval) {
-            clearInterval(this.interval);
-        }
+    override async onWillDisappear(ev: WillDisappearEvent) {
+        const t = this.intervals.get(ev.action.id);
+        if (t) clearInterval(t);
+        this.intervals.delete(ev.action.id);
     }
 
     override async onKeyDown(ev: KeyDownEvent) {

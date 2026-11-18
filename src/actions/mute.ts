@@ -4,7 +4,7 @@
 // (Pfeil neben dem "+"). Das Plugin schaltet NUR den State um --
 // kein setImage, da vom Nutzer gesetzte Bilder Vorrang haetten und
 // Plugin-Overlays dann unsichtbar waeren.
-import streamDeck, { action, KeyDownEvent, WillAppearEvent, DidReceiveSettingsEvent, SingletonAction } from "@elgato/streamdeck";
+import streamDeck, { action, KeyDownEvent, WillAppearEvent, WillDisappearEvent, DidReceiveSettingsEvent, SingletonAction } from "@elgato/streamdeck";
 import { toggleMute } from "../jbl-usb";
 import { readState, onStateChange } from "../state";
 import { disconnectedIcon } from "../icons";
@@ -16,15 +16,25 @@ const STATE_NO_DONGLE = 3;
 
 @action({ UUID: "com.holgermilz.myjbxheadsetcontrol.mute" })
 export class MuteAction extends SingletonAction {
-    private interval?: NodeJS.Timeout;
-    private unsub?: () => void;
+    // per action instance: with two keys of the same type, one must not overwrite the other's timer
+    private intervals = new Map<string, NodeJS.Timeout>();
+    private unsubs = new Map<string, () => void>();
+
+    private stopTimers(id: string): void {
+        const t = this.intervals.get(id);
+        if (t) clearInterval(t);
+        this.intervals.delete(id);
+        this.unsubs.get(id)?.();
+        this.unsubs.delete(id);
+    }
     private settings: any = {};
 
     override async onWillAppear(ev: WillAppearEvent) {
         this.settings = (ev.payload?.settings as any) ?? {};
         await this.refresh(ev.action);
-        this.unsub = onStateChange(() => { this.refresh(ev.action); });
-        this.interval = setInterval(() => { this.refresh(ev.action); }, 5000);
+        this.stopTimers(ev.action.id);
+        this.unsubs.set(ev.action.id, onStateChange(() => { this.refresh(ev.action); }));
+        this.intervals.set(ev.action.id, setInterval(() => { this.refresh(ev.action); }, 5000));
     }
 
     override async onDidReceiveSettings(ev: DidReceiveSettingsEvent) {
@@ -32,9 +42,8 @@ export class MuteAction extends SingletonAction {
         await this.refresh(ev.action);
     }
 
-    override async onWillDisappear() {
-        if (this.interval) clearInterval(this.interval);
-        if (this.unsub) this.unsub();
+    override async onWillDisappear(ev: WillDisappearEvent) {
+        this.stopTimers(ev.action.id);
     }
 
     override async onKeyDown(ev: KeyDownEvent) {

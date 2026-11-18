@@ -14,6 +14,7 @@ let watchdogTimer: NodeJS.Timeout | null = null;
 let dataHandler: ((data: Buffer) => void) | null = null;
 let connecting = false;
 let watchdogTicks = 0;
+let stopped = false; // set on plugin shutdown: no more HID access
 
 // GET requests (category 0x01). The dongle answers in the same format as the events.
 // It answers from its cache even while the headset is off, except 0x35, which reports
@@ -53,7 +54,7 @@ function closeHandle(): void {
 }
 
 function connect(): void {
-    if (connecting || device) return;
+    if (stopped || connecting || device) return;
     connecting = true;
 
     const path = getDevicePath();
@@ -67,6 +68,7 @@ function connect(): void {
         const dev = new HID(path);
         dev.on("data", (data: Buffer) => { if (dataHandler) dataHandler(data); });
         dev.on("error", (err) => {
+            if (stopped) return;
             streamDeck.logger.warn(`JBL HID error (connection lost): ${err}`);
             handleDrop();
         });
@@ -76,7 +78,7 @@ function connect(): void {
         updateState("dongle_present", true);
         streamDeck.logger.info(`JBL connected: ${path}`);
         // the headset may already be on (e.g. PC started after it): ask instead of waiting for events
-        setTimeout(() => queryState(), 200);
+        setTimeout(() => { if (!stopped) queryState(); }, 200);
     } catch (err) {
         connecting = false;
         closeHandle();
@@ -87,6 +89,7 @@ function connect(): void {
 
 // Connection dropped (error or dongle unplugged)
 function handleDrop(): void {
+    if (stopped) return;
     closeHandle();
     markDisconnected(devicePresent());
     if (!reconnectTimer) {
@@ -102,6 +105,7 @@ function handleDrop(): void {
 function startWatchdog(): void {
     if (watchdogTimer) return;
     watchdogTimer = setInterval(() => {
+        if (stopped) return;
         const collections = listCollections();
         const present = collections.length > 0;
         if (device && !present) {
@@ -124,6 +128,21 @@ function startWatchdog(): void {
     }, 2000);
 }
 
+/**
+ * Plugin shutdown: stop watchdog and reconnects, close the handle (ends node-hid's
+ * read thread). Runs on the JS main thread, so never in the middle of a HID call.
+ */
+export function stopDevice(): void {
+    stopped = true;
+    if (watchdogTimer) { clearInterval(watchdogTimer); watchdogTimer = null; }
+    if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    dataHandler = null;
+    if (device) {
+        try { device.removeAllListeners("data"); } catch { /* ignore */ }
+    }
+    closeHandle();
+}
+
 export function startDevice(onData: (data: Buffer) => void): void {
     dataHandler = onData;
     connect();
@@ -132,7 +151,7 @@ export function startDevice(onData: (data: Buffer) => void): void {
 
 /** GET request; the answer arrives as a normal input report (category 0x01). */
 export function sendGet(codeA: number, codeB: number): boolean {
-    if (!device) return false;
+    if (stopped || !device) return false;
     try {
         const payload = Buffer.alloc(64, 0);
         payload.set([0x88, 0x00, 0xdd, 0x01, 0x00, 0x01, 0x00, 0x02, 0x00, codeA, codeB], 0);

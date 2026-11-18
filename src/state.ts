@@ -67,6 +67,18 @@ function scheduleMirror(): void {
     }, MIRROR_INTERVAL_MS);
 }
 
+/** Writes pending changes right away (plugin shutdown). */
+export function flushState(): void {
+    if (mirrorTimer) { clearTimeout(mirrorTimer); mirrorTimer = null; }
+    if (!mirrorDirty) return;
+    mirrorDirty = false;
+    try {
+        const tmpFile = STATE_FILE + ".tmp";
+        fs.writeFileSync(tmpFile, JSON.stringify(memoryState, null, 2), "utf-8");
+        fs.renameSync(tmpFile, STATE_FILE);
+    } catch { /* not critical */ }
+}
+
 export function readState(): any {
     return { ...memoryState };
 }

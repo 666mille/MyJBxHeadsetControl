@@ -1,6 +1,6 @@
 {
 	"Name": "JBxHeadsetControl",
-	"Version": "2.1.0.0",
+	"Version": "2.1.1.0",
 	"Author": "holgermilz",
 	"Actions": [
 		{
@@ -208,8 +208,7 @@
 		}
 	],
 	"Nodejs": {
-		"Version": "20",
-		"Debug": "enabled"
+		"Version": "20"
 	},
 	"UUID": "com.holgermilz.myjbxheadsetcontrol"
 }

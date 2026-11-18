@@ -122,6 +122,12 @@ The EQ actions use the presets you see in JBL QuantumENGINE, including your own:
   `libAirohaEQSerializeImp.dll` from your local QuantumENGINE installation (found
   automatically, or set the path in the Property Inspector). The DLL is **not** part of
   this plugin.
+- **Note for QuantumENGINE 2.0.0.5 and later:** JBL no longer ships
+  `libAirohaEQSerializeImp.dll` (the former `PEQ` subfolder is gone; QuantumENGINE now
+  computes the EQ inside its own SDK). With a current QuantumENGINE the EQ actions
+  therefore **require the QuantumENGINE service to be running**. If you still have the
+  DLL from an older QuantumENGINE version, you can keep using it as a fallback by
+  entering its path in the Property Inspector.
 - On start the plugin runs a self-test: it computes FLAT and compares it byte for byte
   with the data QuantumENGINE sends. If it doesn't match, the EQ actions stay locked and
   nothing is sent. This matters because a wrong coefficient block can mute the headset
@@ -213,9 +219,11 @@ Make sure JBL QuantumENGINE is closed, then quit and restart the Stream Deck app
 
 **EQ actions show "Locked" or the preset list stays empty**
 
-The status line in the Property Inspector shows the reason. Usually the DLL wasn't
-found: enter the path to `libAirohaEQSerializeImp.dll` (typically
-`C:\Program Files\JBL\QuantumENGINE\PEQ\`) in the Property Inspector.
+The status line in the Property Inspector shows the reason. Most likely the
+QuantumENGINE service is not running - start QuantumENGINE. Without the service the
+plugin needs `libAirohaEQSerializeImp.dll`, which only older QuantumENGINE versions
+included (in `C:\Program Files\JBL\QuantumENGINE\PEQ\`); enter its path in the
+Property Inspector if you have it.
 An empty list means `q950.dat` couldn't be read - start QuantumENGINE once so it creates it.
 
 **Logs**
@@ -247,8 +255,10 @@ bundled write) so every key and the dial update immediately when anything change
 An EQ preset in QuantumENGINE is just 10 gain values (31 Hz to 16 kHz). The headset,
 however, can't do anything with gain values on its own - its DSP needs ready-made
 **filter coefficients** (one peaking filter per band, for several sample rates).
-QuantumENGINE computes them on the PC and sends both to the headset. The plugin does
-the same:
+QuantumENGINE computes them on the PC and sends both to the headset. With the
+QuantumENGINE service running, the plugin simply asks the service to switch the preset.
+Without the service, it does the same as QuantumENGINE (this needs the DLL from an older
+QuantumENGINE version, see [EQ presets](#eq-presets)):
 
 1. **Read the preset** - name, frequencies, gains and Q of all presets come from
    QuantumENGINE's `q950.dat`, including your own presets.

@@ -6,19 +6,33 @@ import { readState } from "./state";
 
 type GlobalSettings = { dllPath?: string };
 let initialized = false;
+let lastAttempt = 0;
+let lastLogged = "";
+const RETRY_MS = 60_000; // don't walk Program Files again on every key press
 
+// The DLL is only the fallback for switching presets without QuantumENGINE
+// (applyEqPreset tries the service first). A missing DLL is therefore no error
+// as long as the service runs, and is logged once instead of on every press.
 export async function ensureEngine(): Promise<void> {
     if (initialized && engineStatus().ok) return;
+    if (initialized && Date.now() - lastAttempt < RETRY_MS) return;
     const g = await streamDeck.settings.getGlobalSettings<GlobalSettings>();
     const r = initEngine(g.dllPath);
     initialized = true;
-    if (r.ok) streamDeck.logger.info(`EQ engine ready (${r.dll})`);
-    else streamDeck.logger.error(`EQ engine not ready: ${r.error} (${r.dll ?? "no DLL"})`);
+    lastAttempt = Date.now();
+    const msg = r.ok
+        ? `EQ engine ready (${r.dll})`
+        : `EQ DLL fallback not available: ${r.error} (${r.dll ?? "no DLL"}) - EQ presets are switched via the QuantumENGINE service`;
+    if (msg === lastLogged) return;
+    lastLogged = msg;
+    if (r.ok) streamDeck.logger.info(msg);
+    else streamDeck.logger.warn(msg);
 }
 
 // DLL path changed in the property inspector
 streamDeck.settings.onDidReceiveGlobalSettings<GlobalSettings>(ev => {
     initialized = false;
+    lastAttempt = 0;
     initEngine(ev.settings.dllPath);
 });
 

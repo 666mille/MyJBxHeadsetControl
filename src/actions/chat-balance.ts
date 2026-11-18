@@ -4,7 +4,7 @@
 //   middle: percentages + two-color bar (chat blue / game purple)
 // Last value is stored in the settings (shown after restart).
 import streamDeck, {
-    action, DialRotateEvent, DialDownEvent, WillAppearEvent, DidReceiveSettingsEvent, SingletonAction,
+    action, DialRotateEvent, DialDownEvent, WillAppearEvent, WillDisappearEvent, DidReceiveSettingsEvent, SingletonAction,
 } from "@elgato/streamdeck";
 import { setChatBalance } from "../jbl-usb";
 import { readState, onStateChange } from "../state";
@@ -89,8 +89,17 @@ const RENDER_THROTTLE_MS = 100;
 
 @action({ UUID: "com.holgermilz.myjbxheadsetcontrol.chatbalance" })
 export class ChatBalanceAction extends SingletonAction {
-    private interval?: NodeJS.Timeout;
-    private unsub?: () => void;
+    // per action instance: with two keys of the same type, one must not overwrite the other's timer
+    private intervals = new Map<string, NodeJS.Timeout>();
+    private unsubs = new Map<string, () => void>();
+
+    private stopTimers(id: string): void {
+        const t = this.intervals.get(id);
+        if (t) clearInterval(t);
+        this.intervals.delete(id);
+        this.unsubs.get(id)?.();
+        this.unsubs.delete(id);
+    }
     private settings: DialSettings = {};
     private lastSvg = "";
     private lastRenderAt = 0;
@@ -99,13 +108,13 @@ export class ChatBalanceAction extends SingletonAction {
     override async onWillAppear(ev: WillAppearEvent) {
         try { this.settings = ((await ev.action.getSettings()) ?? {}) as DialSettings; } catch { this.settings = {}; }
         await this.refresh(ev.action);
-        this.unsub = onStateChange(() => { this.refresh(ev.action); });
-        this.interval = setInterval(() => { this.refresh(ev.action); }, 5000);
+        this.stopTimers(ev.action.id);
+        this.unsubs.set(ev.action.id, onStateChange(() => { this.refresh(ev.action); }));
+        this.intervals.set(ev.action.id, setInterval(() => { this.refresh(ev.action); }, 5000));
     }
 
-    override async onWillDisappear() {
-        if (this.interval) clearInterval(this.interval);
-        if (this.unsub) this.unsub();
+    override async onWillDisappear(ev: WillDisappearEvent) {
+        this.stopTimers(ev.action.id);
         if (this.trailingTimer) clearTimeout(this.trailingTimer);
     }
 
